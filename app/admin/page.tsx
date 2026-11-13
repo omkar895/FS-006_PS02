@@ -2,6 +2,19 @@
 
 import React, { useState, useEffect } from "react";
 import { SimulationRunResult } from "@/lib/algorithms/simulation-lab";
+import {
+  ResponsiveContainer,
+  BarChart,
+  Bar,
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ReferenceLine,
+} from "recharts";
 
 interface ZoneTelemetryRecord {
   zoneSlug: string;
@@ -31,10 +44,20 @@ interface ZoneResponseData {
   zoneIntelligence: ZoneTelemetryRecord[];
 }
 
+const emptySubscribe = () => () => {};
+function useIsMounted() {
+  return React.useSyncExternalStore(
+    emptySubscribe,
+    () => true,
+    () => false
+  );
+}
+
 export default function AdminControlCenter() {
   const [activeTab, setActiveTab] = useState<"operations" | "simulation">("operations");
   const [loading, setLoading] = useState(false);
   const [simLoading, setSimLoading] = useState(false);
+  const isMounted = useIsMounted();
   const [zoneData, setZoneData] = useState<ZoneResponseData | null>(null);
   const [simResult, setSimResult] = useState<SimulationRunResult | null>(null);
 
@@ -103,6 +126,60 @@ export default function AdminControlCenter() {
       setSimLoading(false);
     }
   };
+
+  const zoneChartData =
+    zoneData?.zoneIntelligence?.map((z) => ({
+      name: z.zoneSlug.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()),
+      demand: z.predictedDemand30m,
+      supply: z.availableDriversSupply,
+      ratio: z.demandSupplyRatio,
+      surge: z.simulatedSurgeMultiplier,
+    })) || [];
+
+  const workloadComparisonData = simResult
+    ? [
+        {
+          metric: "Min Trips",
+          Baseline: simResult.baseline.minTripsPerDriver,
+          GoFair: simResult.fairRide.minTripsPerDriver,
+        },
+        {
+          metric: "Avg Trips",
+          Baseline: Number((simResult.baseline.assignedCount / simResult.config.driverCount).toFixed(1)),
+          GoFair: Number((simResult.fairRide.assignedCount / simResult.config.driverCount).toFixed(1)),
+        },
+        {
+          metric: "Max Trips",
+          Baseline: simResult.baseline.maxTripsPerDriver,
+          GoFair: simResult.fairRide.maxTripsPerDriver,
+        },
+        {
+          metric: "Inequality (StdDev)",
+          Baseline: simResult.baseline.workloadStandardDeviation,
+          GoFair: simResult.fairRide.workloadStandardDeviation,
+        },
+      ]
+    : [];
+
+  const serviceLevelComparisonData = simResult
+    ? [
+        {
+          metric: "Avg ETA (min)",
+          Baseline: simResult.baseline.avgPickupEtaMinutes,
+          GoFair: simResult.fairRide.avgPickupEtaMinutes,
+        },
+        {
+          metric: "Avg Dist (km)",
+          Baseline: simResult.baseline.avgPickupDistanceKm,
+          GoFair: simResult.fairRide.avgPickupDistanceKm,
+        },
+        {
+          metric: "Completion (%)",
+          Baseline: simResult.baseline.completionRatePercent,
+          GoFair: simResult.fairRide.completionRatePercent,
+        },
+      ]
+    : [];
 
   return (
     <div className="max-w-7xl mx-auto py-8 px-6">
@@ -249,6 +326,121 @@ export default function AdminControlCenter() {
               </tbody>
             </table>
           </div>
+
+          {/* Interactive Zone Telemetry Visualizations */}
+          {isMounted && zoneChartData.length > 0 && (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Chart 1: Demand vs Supply Grouped Bar Chart */}
+              <div className="bg-white border border-[#D6DCD2] rounded-lg p-5 shadow-sm">
+                <div className="flex items-center justify-between mb-4 pb-2 border-b border-[#D6DCD2]">
+                  <div>
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-[#245A43]">
+                      Fleet Balance Analytics
+                    </span>
+                    <h4 className="text-sm font-bold text-[#18231D]">
+                      Forecast Demand (+30m) vs Driver Supply
+                    </h4>
+                  </div>
+                  <span className="text-[11px] bg-[#EAECE5] text-[#35423A] font-medium px-2 py-0.5 rounded">
+                    Zone Level
+                  </span>
+                </div>
+                <div className="h-64 w-full">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={zoneChartData} margin={{ top: 10, right: 10, left: -10, bottom: 20 }}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#EAECE5" vertical={false} />
+                      <XAxis
+                        dataKey="name"
+                        stroke="#68746C"
+                        fontSize={10}
+                        interval={0}
+                        angle={-18}
+                        textAnchor="end"
+                      />
+                      <YAxis stroke="#68746C" fontSize={10} />
+                      <Tooltip
+                        contentStyle={{
+                          backgroundColor: "#18231D",
+                          border: "none",
+                          borderRadius: "6px",
+                          color: "#FFFFFF",
+                          fontSize: "11px",
+                        }}
+                      />
+                      <Legend wrapperStyle={{ fontSize: "11px", paddingTop: "10px" }} />
+                      <Bar dataKey="demand" name="Predicted Demand (+30m)" fill="#245A43" radius={[4, 4, 0, 0]} />
+                      <Bar dataKey="supply" name="Driver Supply" fill="#476B75" radius={[4, 4, 0, 0]} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+
+              {/* Chart 2: Pressure Ratio & Dynamic Surge Curve */}
+              <div className="bg-white border border-[#D6DCD2] rounded-lg p-5 shadow-sm">
+                <div className="flex items-center justify-between mb-4 pb-2 border-b border-[#D6DCD2]">
+                  <div>
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-[#B96A2E]">
+                      Dynamic Pricing & Repositioning
+                    </span>
+                    <h4 className="text-sm font-bold text-[#18231D]">
+                      Zone Pressure Ratio (P) & Surge Multiplier
+                    </h4>
+                  </div>
+                  <span className="text-[11px] bg-[#FCE8E6] text-[#B7443E] font-medium px-2 py-0.5 rounded">
+                    Surge Limit 3.0x
+                  </span>
+                </div>
+                <div className="h-64 w-full">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={zoneChartData} margin={{ top: 10, right: 10, left: -10, bottom: 20 }}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#EAECE5" vertical={false} />
+                      <XAxis
+                        dataKey="name"
+                        stroke="#68746C"
+                        fontSize={10}
+                        interval={0}
+                        angle={-18}
+                        textAnchor="end"
+                      />
+                      <YAxis stroke="#68746C" fontSize={10} domain={[0, 4]} />
+                      <Tooltip
+                        contentStyle={{
+                          backgroundColor: "#18231D",
+                          border: "none",
+                          borderRadius: "6px",
+                          color: "#FFFFFF",
+                          fontSize: "11px",
+                        }}
+                      />
+                      <Legend wrapperStyle={{ fontSize: "11px", paddingTop: "10px" }} />
+                      <ReferenceLine
+                        y={1.4}
+                        stroke="#B7443E"
+                        strokeDasharray="4 4"
+                        label={{ value: "Reposition Deficit Threshold (1.4x)", fill: "#B7443E", fontSize: 10, position: "top" }}
+                      />
+                      <Line
+                        type="monotone"
+                        dataKey="ratio"
+                        name="Demand / Supply Ratio"
+                        stroke="#B7443E"
+                        strokeWidth={2}
+                        dot={{ r: 4, fill: "#B7443E" }}
+                      />
+                      <Line
+                        type="monotone"
+                        dataKey="surge"
+                        name="Surge Multiplier"
+                        stroke="#B96A2E"
+                        strokeWidth={2}
+                        dot={{ r: 4, fill: "#B96A2E" }}
+                      />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       )}
 
@@ -422,6 +614,77 @@ export default function AdminControlCenter() {
                     Calculated over identical candidate snapshot
                   </span>
                 </div>
+
+                {/* Visual Chart Comparison */}
+                {isMounted && workloadComparisonData.length > 0 && (
+                  <div className="p-6 border-t border-[#D6DCD2] bg-white grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    {/* Workload Distribution Chart */}
+                    <div className="border border-[#D6DCD2] rounded-lg p-4 bg-[#F4F3ED]/30">
+                      <div className="mb-3">
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-[#245A43]">
+                          Workload Equalization
+                        </span>
+                        <h4 className="text-sm font-bold text-[#18231D]">
+                          Driver Trip Range & Inequality (Std Dev)
+                        </h4>
+                      </div>
+                      <div className="h-60 w-full">
+                        <ResponsiveContainer width="100%" height="100%">
+                          <BarChart data={workloadComparisonData} margin={{ top: 10, right: 10, left: -10, bottom: 10 }}>
+                            <CartesianGrid strokeDasharray="3 3" stroke="#EAECE5" vertical={false} />
+                            <XAxis dataKey="metric" stroke="#68746C" fontSize={10} />
+                            <YAxis stroke="#68746C" fontSize={10} />
+                            <Tooltip
+                              contentStyle={{
+                                backgroundColor: "#18231D",
+                                border: "none",
+                                borderRadius: "6px",
+                                color: "#FFFFFF",
+                                fontSize: "11px",
+                              }}
+                            />
+                            <Legend wrapperStyle={{ fontSize: "11px", paddingTop: "10px" }} />
+                            <Bar dataKey="Baseline" name="Nearest Baseline" fill="#8C9B90" radius={[4, 4, 0, 0]} />
+                            <Bar dataKey="GoFair" name="Go-Fair Multi-Factor" fill="#245A43" radius={[4, 4, 0, 0]} />
+                          </BarChart>
+                        </ResponsiveContainer>
+                      </div>
+                    </div>
+
+                    {/* Service Level & ETA Chart */}
+                    <div className="border border-[#D6DCD2] rounded-lg p-4 bg-[#F4F3ED]/30">
+                      <div className="mb-3">
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-[#476B75]">
+                          Service Quality Metrics
+                        </span>
+                        <h4 className="text-sm font-bold text-[#18231D]">
+                          Pickup ETA, Distance & Completion Rate
+                        </h4>
+                      </div>
+                      <div className="h-60 w-full">
+                        <ResponsiveContainer width="100%" height="100%">
+                          <BarChart data={serviceLevelComparisonData} margin={{ top: 10, right: 10, left: -10, bottom: 10 }}>
+                            <CartesianGrid strokeDasharray="3 3" stroke="#EAECE5" vertical={false} />
+                            <XAxis dataKey="metric" stroke="#68746C" fontSize={10} />
+                            <YAxis stroke="#68746C" fontSize={10} />
+                            <Tooltip
+                              contentStyle={{
+                                backgroundColor: "#18231D",
+                                border: "none",
+                                borderRadius: "6px",
+                                color: "#FFFFFF",
+                                fontSize: "11px",
+                              }}
+                            />
+                            <Legend wrapperStyle={{ fontSize: "11px", paddingTop: "10px" }} />
+                            <Bar dataKey="Baseline" name="Nearest Baseline" fill="#8C9B90" radius={[4, 4, 0, 0]} />
+                            <Bar dataKey="GoFair" name="Go-Fair Multi-Factor" fill="#476B75" radius={[4, 4, 0, 0]} />
+                          </BarChart>
+                        </ResponsiveContainer>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           )}
