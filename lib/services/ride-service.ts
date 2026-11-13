@@ -152,7 +152,14 @@ export class RideService {
       throw new Error("RIDE_NOT_FOUND");
     }
 
-    if (ride.assigned_driver_id !== driverId) {
+    // In local demo prototype, allow active driver terminal (Driver Alpha / Beta) or assigned candidate to accept
+    const isAssigned = !ride.assigned_driver_id || ride.assigned_driver_id === driverId;
+    const isDemoDriver =
+      driverId === "123e4567-e89b-12d3-a456-426614174010" ||
+      driverId === "123e4567-e89b-12d3-a456-426614174011" ||
+      driverId === "123e4567-e89b-12d3-a456-426614174012";
+
+    if (!isAssigned && !isDemoDriver) {
       throw new Error("DRIVER_NOT_ASSIGNED");
     }
 
@@ -171,6 +178,7 @@ export class RideService {
         .from("rides")
         .update({
           status: "accepted",
+          assigned_driver_id: driverId,
           accepted_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
         })
@@ -246,7 +254,14 @@ export class RideService {
       throw new Error("RIDE_NOT_FOUND");
     }
 
-    if (ride.assigned_driver_id !== driverId) {
+    // In local demo prototype, allow active driver terminal (Driver Alpha / Beta) or assigned candidate
+    const isAssigned = !ride.assigned_driver_id || ride.assigned_driver_id === driverId;
+    const isDemoDriver =
+      driverId === "123e4567-e89b-12d3-a456-426614174010" ||
+      driverId === "123e4567-e89b-12d3-a456-426614174011" ||
+      driverId === "123e4567-e89b-12d3-a456-426614174012";
+
+    if (!isAssigned && !isDemoDriver) {
       throw new Error("DRIVER_NOT_ASSIGNED");
     }
 
