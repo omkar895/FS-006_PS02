@@ -12,3 +12,4 @@ export async function GET() {
     env: process.env.NODE_ENV || "development",
   });
 }
+

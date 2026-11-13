@@ -12,3 +12,4 @@ describe("Sanity & Environment Test", () => {
     expect(maxPickupEtaMinutes).toBe(15);
   });
 });
+
