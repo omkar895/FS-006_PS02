@@ -77,6 +77,7 @@ describe("AdminControlCenter DOM & Integration Tests", () => {
                   workloadStandardDeviation: 3.4,
                   minTripsPerDriver: 0,
                   maxTripsPerDriver: 9,
+                  giniCoefficient: 0.52,
                 },
                 fairRide: {
                   assignedCount: 43,
@@ -87,11 +88,18 @@ describe("AdminControlCenter DOM & Integration Tests", () => {
                   workloadStandardDeviation: 1.2,
                   minTripsPerDriver: 3,
                   maxTripsPerDriver: 5,
+                  giniCoefficient: 0.18,
                 },
+                lorenzCurve: [
+                  { percentile: 0, baseline: 0, fairRide: 0, perfect: 0 },
+                  { percentile: 20, baseline: 5, fairRide: 18, perfect: 20 },
+                  { percentile: 100, baseline: 100, fairRide: 100, perfect: 100 },
+                ],
                 tradeOffAnalysis: {
                   workloadFairnessGainPercent: 64.7,
                   etaTradeOffMinutes: 0.4,
                   unassignedDelta: -1,
+                  giniInequalityReductionPercent: 65.4,
                 },
               },
             }),
@@ -110,6 +118,9 @@ describe("AdminControlCenter DOM & Integration Tests", () => {
     fireEvent.click(simTabBtn);
 
     expect(screen.getByText("Dispatch Simulation Lab Configuration")).toBeInTheDocument();
+    expect(screen.getByText("Policy Governance Tuner")).toBeInTheDocument();
+    expect(screen.getByText("Interactive 5-Factor Dispatch Weight Sliders")).toBeInTheDocument();
+    expect(screen.getByText(/Monsoon \/ Peak Rain Simulation Mode/i)).toBeInTheDocument();
 
     // Submit simulation form
     const runBtn = screen.getByRole("button", { name: /Execute Simulation Run/i });
@@ -120,6 +131,8 @@ describe("AdminControlCenter DOM & Integration Tests", () => {
       expect(screen.getByText("Go-Fair Multi-Factor")).toBeInTheDocument();
       expect(screen.getByText("Trade-off Assessment:")).toBeInTheDocument();
       expect(screen.getByText(/64.7% reduction/)).toBeInTheDocument();
+      expect(screen.getByText(/0.52 \(High Inequality\)/i)).toBeInTheDocument();
+      expect(screen.getByText(/0.18 \(Equitable Fleet\)/i)).toBeInTheDocument();
     });
   });
 });

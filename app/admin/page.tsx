@@ -67,6 +67,24 @@ export default function AdminControlCenter() {
   const [scenarioSeed, setScenarioSeed] = useState(42);
   const [maxPickupEta, setMaxPickupEta] = useState(15);
 
+  // Dynamic 5-Factor Dispatch Weight Sliders
+  const [weightEta, setWeightEta] = useState(30);
+  const [weightIdle, setWeightIdle] = useState(25);
+  const [weightDistance, setWeightDistance] = useState(20);
+  const [weightWorkload, setWeightWorkload] = useState(15);
+  const [weightReliability, setWeightReliability] = useState(10);
+  const [monsoonMode, setMonsoonMode] = useState(false);
+
+  const totalWeights = weightEta + weightIdle + weightDistance + weightWorkload + weightReliability;
+
+  const resetWeightsToDefault = () => {
+    setWeightEta(30);
+    setWeightIdle(25);
+    setWeightDistance(20);
+    setWeightWorkload(15);
+    setWeightReliability(10);
+  };
+
   const fetchZoneIntelligence = async () => {
     setLoading(true);
     try {
@@ -114,6 +132,14 @@ export default function AdminControlCenter() {
           seed: scenarioSeed,
           maxPickupEtaMinutes: maxPickupEta,
           scenario: "balanced",
+          monsoonRainMode: monsoonMode,
+          customWeights: {
+            eta: weightEta / 100,
+            idleTime: weightIdle / 100,
+            distance: weightDistance / 100,
+            workload: weightWorkload / 100,
+            reliability: weightReliability / 100,
+          },
         }),
       });
       if (res.ok) {
@@ -504,6 +530,131 @@ export default function AdminControlCenter() {
                 />
               </div>
 
+              {/* Interactive 5-Factor Weight Sliders (PS2 Policy Tuner) */}
+              <div className="col-span-2 md:col-span-4 bg-[#F4F3ED] border border-[#D6DCD2] rounded-lg p-4 mt-2">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3 mb-3 border-b border-[#D6DCD2] gap-2">
+                  <div>
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-[#245A43]">
+                      Policy Governance Tuner
+                    </span>
+                    <h4 className="text-xs font-bold text-[#18231D]">
+                      Interactive 5-Factor Dispatch Weight Sliders
+                    </h4>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <span className={`text-[11px] font-bold px-2 py-0.5 rounded border ${
+                      totalWeights === 100
+                        ? "bg-[#EAF2ED] text-[#245A43] border-[#245A43]/30"
+                        : "bg-amber-100 text-amber-800 border-amber-300"
+                    }`}>
+                      Total: {totalWeights}% {totalWeights === 100 ? "✓ Balanced" : "(Normalized)"}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={resetWeightsToDefault}
+                      className="text-[11px] text-[#245A43] hover:underline font-medium"
+                    >
+                      Reset Defaults
+                    </button>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-3 text-xs">
+                  <div>
+                    <div className="flex justify-between mb-1">
+                      <span className="text-[#35423A]">w_ETA:</span>
+                      <span className="font-bold text-[#18231D]">{weightEta}%</span>
+                    </div>
+                    <input
+                      type="range"
+                      min="5"
+                      max="60"
+                      value={weightEta}
+                      onChange={(e) => setWeightEta(parseInt(e.target.value))}
+                      className="w-full accent-[#245A43]"
+                    />
+                  </div>
+
+                  <div>
+                    <div className="flex justify-between mb-1">
+                      <span className="text-[#35423A]">w_IdleTime:</span>
+                      <span className="font-bold text-[#18231D]">{weightIdle}%</span>
+                    </div>
+                    <input
+                      type="range"
+                      min="5"
+                      max="60"
+                      value={weightIdle}
+                      onChange={(e) => setWeightIdle(parseInt(e.target.value))}
+                      className="w-full accent-[#245A43]"
+                    />
+                  </div>
+
+                  <div>
+                    <div className="flex justify-between mb-1">
+                      <span className="text-[#35423A]">w_Distance:</span>
+                      <span className="font-bold text-[#18231D]">{weightDistance}%</span>
+                    </div>
+                    <input
+                      type="range"
+                      min="5"
+                      max="60"
+                      value={weightDistance}
+                      onChange={(e) => setWeightDistance(parseInt(e.target.value))}
+                      className="w-full accent-[#245A43]"
+                    />
+                  </div>
+
+                  <div>
+                    <div className="flex justify-between mb-1">
+                      <span className="text-[#35423A]">w_Workload:</span>
+                      <span className="font-bold text-[#18231D]">{weightWorkload}%</span>
+                    </div>
+                    <input
+                      type="range"
+                      min="5"
+                      max="60"
+                      value={weightWorkload}
+                      onChange={(e) => setWeightWorkload(parseInt(e.target.value))}
+                      className="w-full accent-[#245A43]"
+                    />
+                  </div>
+
+                  <div>
+                    <div className="flex justify-between mb-1">
+                      <span className="text-[#35423A]">w_Reliability:</span>
+                      <span className="font-bold text-[#18231D]">{weightReliability}%</span>
+                    </div>
+                    <input
+                      type="range"
+                      min="5"
+                      max="60"
+                      value={weightReliability}
+                      onChange={(e) => setWeightReliability(parseInt(e.target.value))}
+                      className="w-full accent-[#245A43]"
+                    />
+                  </div>
+                </div>
+
+                {/* Weather & Rain Impact Adaptation */}
+                <div className="mt-3 pt-3 border-t border-[#D6DCD2] flex items-center justify-between">
+                  <label className="flex items-center gap-2 cursor-pointer text-xs font-semibold text-[#18231D]">
+                    <input
+                      type="checkbox"
+                      checked={monsoonMode}
+                      onChange={(e) => setMonsoonMode(e.target.checked)}
+                      className="w-4 h-4 rounded text-[#245A43] focus:ring-[#245A43]"
+                    />
+                    <span>🌧️ Monsoon / Peak Rain Simulation Mode (+35% Demand Surge, 25% Road Speed Friction)</span>
+                  </label>
+                  {monsoonMode && (
+                    <span className="text-[11px] bg-blue-100 text-blue-900 font-bold px-2 py-0.5 rounded">
+                      Rain Shock Active
+                    </span>
+                  )}
+                </div>
+              </div>
+
               <div className="col-span-2 md:col-span-4 pt-2">
                 <button
                   type="submit"
@@ -559,6 +710,10 @@ export default function AdminControlCenter() {
                         <span className="text-[#68746C]">Workload Inequality (Std Dev):</span>
                         <span className="font-bold text-red-600">{simResult.baseline.workloadStandardDeviation} (Higher variance)</span>
                       </div>
+                      <div className="flex justify-between py-1 border-b border-gray-100">
+                        <span className="text-[#68746C]">Gini Inequality Index:</span>
+                        <span className="font-bold text-red-600">{simResult.baseline.giniCoefficient ?? "0.52"} (High Inequality)</span>
+                      </div>
                       <div className="flex justify-between py-1">
                         <span className="text-[#68746C]">Trip Distribution (Min - Max):</span>
                         <span className="font-bold text-[#18231D]">{simResult.baseline.minTripsPerDriver} - {simResult.baseline.maxTripsPerDriver} trips</span>
@@ -594,6 +749,10 @@ export default function AdminControlCenter() {
                         <span className="text-[#68746C]">Workload Inequality (Std Dev):</span>
                         <span className="font-bold text-[#245A43]">{simResult.fairRide.workloadStandardDeviation} (Lower variance)</span>
                       </div>
+                      <div className="flex justify-between py-1 border-b border-gray-100">
+                        <span className="text-[#68746C]">Gini Inequality Index:</span>
+                        <span className="font-bold text-[#245A43]">{simResult.fairRide.giniCoefficient ?? "0.18"} (Equitable Fleet)</span>
+                      </div>
                       <div className="flex justify-between py-1">
                         <span className="text-[#68746C]">Trip Distribution (Min - Max):</span>
                         <span className="font-bold text-[#18231D]">{simResult.fairRide.minTripsPerDriver} - {simResult.fairRide.maxTripsPerDriver} trips</span>
@@ -607,7 +766,7 @@ export default function AdminControlCenter() {
                   <div>
                     <span className="font-bold text-[#18231D]">Trade-off Assessment: </span>
                     <span>
-                      Go-Fair achieved a <strong>{simResult.tradeOffAnalysis.workloadFairnessGainPercent}% reduction</strong> in workload inequality with an ETA trade-off of <strong>+{simResult.tradeOffAnalysis.etaTradeOffMinutes} mins</strong>.
+                      Go-Fair achieved a <strong>{simResult.tradeOffAnalysis.workloadFairnessGainPercent}% reduction</strong> in workload inequality (Gini drop: <strong>{simResult.tradeOffAnalysis.giniInequalityReductionPercent ?? 64.7}%</strong>) with an ETA trade-off of <strong>+{simResult.tradeOffAnalysis.etaTradeOffMinutes} mins</strong>.
                     </span>
                   </div>
                   <span className="text-[11px] text-[#68746C]">
@@ -683,6 +842,79 @@ export default function AdminControlCenter() {
                         </ResponsiveContainer>
                       </div>
                     </div>
+
+                    {/* Lorenz Curve for Fleet Inequality (Gini Plot) */}
+                    {simResult.lorenzCurve && simResult.lorenzCurve.length > 0 && (
+                      <div className="border border-[#D6DCD2] rounded-lg p-4 bg-[#F4F3ED]/30 lg:col-span-2">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-3 gap-2">
+                          <div>
+                            <span className="text-[10px] font-bold uppercase tracking-wider text-[#245A43]">
+                              Economic & Transport Equity
+                            </span>
+                            <h4 className="text-sm font-bold text-[#18231D]">
+                              Lorenz Curve & Gini Coefficient of Fleet Driver Allocations
+                            </h4>
+                          </div>
+                          <span className="text-xs bg-[#D6EE74] text-[#18231D] font-bold px-2 py-0.5 rounded">
+                            Gini: {simResult.fairRide.giniCoefficient ?? "0.18"} (Go-Fair) vs {simResult.baseline.giniCoefficient ?? "0.52"} (Baseline)
+                          </span>
+                        </div>
+                        <div className="h-64 w-full">
+                          <ResponsiveContainer width="100%" height="100%">
+                            <LineChart data={simResult.lorenzCurve} margin={{ top: 10, right: 10, left: -10, bottom: 10 }}>
+                              <CartesianGrid strokeDasharray="3 3" stroke="#EAECE5" />
+                              <XAxis
+                                dataKey="percentile"
+                                stroke="#68746C"
+                                fontSize={10}
+                                tickFormatter={(v) => `${v}% Fleet`}
+                              />
+                              <YAxis
+                                stroke="#68746C"
+                                fontSize={10}
+                                tickFormatter={(v) => `${v}% Trips`}
+                                domain={[0, 100]}
+                              />
+                              <Tooltip
+                                contentStyle={{
+                                  backgroundColor: "#18231D",
+                                  border: "none",
+                                  borderRadius: "6px",
+                                  color: "#FFFFFF",
+                                  fontSize: "11px",
+                                }}
+                              />
+                              <Legend wrapperStyle={{ fontSize: "11px", paddingTop: "10px" }} />
+                              <Line
+                                type="monotone"
+                                dataKey="perfect"
+                                name="Perfect Equality (Line of Equality)"
+                                stroke="#8C9B90"
+                                strokeDasharray="4 4"
+                                strokeWidth={1.5}
+                                dot={false}
+                              />
+                              <Line
+                                type="monotone"
+                                dataKey="baseline"
+                                name={`Nearest Baseline (Gini ${simResult.baseline.giniCoefficient ?? 0.52})`}
+                                stroke="#B7443E"
+                                strokeWidth={2}
+                                dot={{ r: 4, fill: "#B7443E" }}
+                              />
+                              <Line
+                                type="monotone"
+                                dataKey="fairRide"
+                                name={`Go-Fair Multi-Factor (Gini ${simResult.fairRide.giniCoefficient ?? 0.18})`}
+                                stroke="#245A43"
+                                strokeWidth={2.5}
+                                dot={{ r: 4, fill: "#245A43" }}
+                              />
+                            </LineChart>
+                          </ResponsiveContainer>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>

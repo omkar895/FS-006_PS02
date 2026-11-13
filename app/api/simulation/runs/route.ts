@@ -11,6 +11,16 @@ const SimulationRequestSchema = z.object({
   driverCount: z.number().int().min(3).max(50).default(10),
   seed: z.number().int().default(42),
   maxPickupEtaMinutes: z.number().positive().default(15),
+  customWeights: z
+    .object({
+      eta: z.number(),
+      idleTime: z.number(),
+      distance: z.number(),
+      workload: z.number(),
+      reliability: z.number(),
+    })
+    .optional(),
+  monsoonRainMode: z.boolean().default(false),
 });
 
 export async function POST(req: NextRequest) {
