@@ -14,6 +14,8 @@ export interface CreateRideInput {
   destinationLat: number;
   destinationLng: number;
   idempotencyKey?: string;
+  vehicleMode?: "cab" | "bike";
+  passengerCount?: number;
 }
 
 export class RideService {
@@ -44,7 +46,12 @@ export class RideService {
       input.destinationLng
     );
 
-    const pricing = calculateFareEstimate(distanceKm);
+    const pricing = calculateFareEstimate(
+      distanceKm,
+      1.0,
+      30,
+      input.vehicleMode || "cab"
+    );
 
     // Execute fairness-aware dispatch matching over available fleet
     const admin = createAdminClient();
@@ -103,6 +110,8 @@ export class RideService {
         scoreContributions: assignedCandidate?.scoreContributions ?? null,
         explanation: assignedCandidate?.explanation ?? "No driver immediately available within service threshold",
         baselineMatch: dispatchResult.baselineCandidate?.userId ?? null,
+        vehicleMode: input.vehicleMode || "cab",
+        passengerCount: input.passengerCount || 1,
       },
     };
 

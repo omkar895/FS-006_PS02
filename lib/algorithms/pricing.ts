@@ -35,19 +35,22 @@ export interface FareCalculation {
 export function calculateFareEstimate(
   distanceKm: number,
   surgeMultiplier: number = 1.0,
-  assumedSpeedKmh: number = 30
+  assumedSpeedKmh: number = 30,
+  vehicleMode: "cab" | "bike" = "cab"
 ): FareCalculation {
   const clampedSurge = Math.max(1.0, Math.min(3.0, surgeMultiplier));
-  const baseFare = 50.0; // Base flag-drop fare
-  const perKmRate = 15.0; // ₹15/km
+  const isBike = vehicleMode === "bike";
+  const baseFare = isBike ? 25.0 : 50.0;
+  const perKmRate = isBike ? 8.0 : 15.0;
   const distanceFare = Math.round(distanceKm * perKmRate * 100) / 100;
 
   const rawFare = (baseFare + distanceFare) * clampedSurge;
   const fareEstimate = Math.round(rawFare * 100) / 100;
 
-  // Approximate trip duration based on assumed speed
-  const tripHours = distanceKm / Math.max(10, assumedSpeedKmh);
-  const tripEtaMinutes = Math.max(5, Math.round(tripHours * 60));
+  // Bikes are nimbler in city traffic, giving a slightly faster ETA
+  const effectiveSpeed = isBike ? Math.max(assumedSpeedKmh, 35) : Math.max(10, assumedSpeedKmh);
+  const tripHours = distanceKm / effectiveSpeed;
+  const tripEtaMinutes = Math.max(isBike ? 3 : 5, Math.round(tripHours * 60));
 
   return {
     baseFare,

@@ -21,6 +21,8 @@ const CreateRideRequestSchema = z.object({
     lng: z.number().min(-180).max(180),
   }),
   idempotencyKey: z.string().optional(),
+  vehicleMode: z.enum(["cab", "bike"]).default("cab").optional(),
+  passengerCount: z.number().int().min(1).max(6).default(1).optional(),
 });
 
 export async function POST(req: NextRequest) {
@@ -56,6 +58,8 @@ export async function POST(req: NextRequest) {
       destinationLat: parsed.data.destination.lat,
       destinationLng: parsed.data.destination.lng,
       idempotencyKey: parsed.data.idempotencyKey,
+      vehicleMode: parsed.data.vehicleMode || "cab",
+      passengerCount: parsed.data.passengerCount || 1,
     });
 
     return apiSuccess(ride, 201);

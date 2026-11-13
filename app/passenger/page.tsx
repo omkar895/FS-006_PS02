@@ -13,6 +13,7 @@ import { fetchRealRoadRoute } from "@/lib/services/routing-service";
 import { findNearestMetroStation } from "@/lib/utils/metro-stations";
 import { formatDuration } from "@/lib/utils/format";
 import { ReassignmentRadar } from "@/components/dispatch/reassignment-radar";
+import { ChatbotWidget } from "@/components/ai/chatbot-widget";
 
 interface NearbyDriver {
   userId: string;
@@ -34,6 +35,8 @@ export default function PassengerWorkspace() {
   const [pickupLocation, setPickupLocation] = useState<PresetLocation>(PRESET_LOCATIONS[0]);
   const [destLocation, setDestLocation] = useState<PresetLocation>(PRESET_LOCATIONS[1]);
   const [isPooling, setIsPooling] = useState(false);
+  const [vehicleMode, setVehicleMode] = useState<"cab" | "bike">("cab");
+  const [memberCount, setMemberCount] = useState<number>(1);
   const [inputMode, setInputMode] = useState<"search" | "preset">("preset");
 
   // Real road route state
@@ -112,7 +115,10 @@ export default function PassengerWorkspace() {
       (destLocation.lng - pickupLocation.lng) * 85
     ).toFixed(2)
   );
-  const directFare = Math.max(50, Math.round(50 + effectiveDistanceKm * 15));
+  const isBike = vehicleMode === "bike";
+  const directFare = isBike
+    ? Math.max(25, Math.round(25 + effectiveDistanceKm * 8))
+    : Math.max(50, Math.round(50 + effectiveDistanceKm * 15));
 
   const fetchRides = async () => {
     setLoading(true);
@@ -300,6 +306,8 @@ export default function PassengerWorkspace() {
             lng: destLocation.lng,
           },
           idempotencyKey: crypto.randomUUID(),
+          vehicleMode,
+          passengerCount: memberCount,
         }),
       });
 
@@ -545,92 +553,253 @@ export default function PassengerWorkspace() {
                 )}
               </div>
 
-              {/* Ride Options / Tier Selector (Uber Style) */}
+              {/* Vehicle Category Selection: Cab vs Bike */}
               <div className="space-y-2">
                 <span className="text-[11px] font-bold uppercase tracking-wider text-zinc-500 block">
-                  Select Ride Tier
+                  Select Vehicle Category
                 </span>
                 <div className="grid grid-cols-2 gap-2.5">
-                  {/* Tier 1: Go-Fair Prime */}
+                  {/* Category 1: Cab / Car */}
                   <div
-                    onClick={() => setIsPooling(false)}
+                    onClick={() => {
+                      setVehicleMode("cab");
+                    }}
                     className={`cursor-pointer p-3 rounded-2xl border transition-all ${
-                      !isPooling
-                        ? "border-black bg-zinc-900 text-white shadow-sm"
+                      vehicleMode === "cab"
+                        ? "border-black bg-zinc-900 text-white shadow-sm ring-1 ring-zinc-700"
                         : "border-zinc-200 bg-white hover:border-zinc-300 text-zinc-900"
                     }`}
                   >
                     <div className="flex items-center justify-between mb-1">
-                      <span className="text-base">🚗</span>
-                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                        !isPooling ? "bg-white/20 text-white" : "bg-zinc-100 text-zinc-600"
-                      }`}>
-                        4 seats
+                      <span className="text-xl">🚗</span>
+                      <span
+                        className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                          vehicleMode === "cab"
+                            ? "bg-white/20 text-white"
+                            : "bg-zinc-100 text-zinc-600"
+                        }`}
+                      >
+                        Up to 4 Seats
                       </span>
                     </div>
-                    <div className="font-extrabold text-xs">Go-Fair Prime</div>
-                    <div className="flex items-center justify-between mt-2 pt-2 border-t border-zinc-200/20">
-                      <span className={`text-[11px] font-bold ${!isPooling ? "text-emerald-400" : "text-emerald-700"}`}>
-                        ₹{directFare}
-                      </span>
-                      <span className={`text-[10px] ${!isPooling ? "text-zinc-300" : "text-zinc-500"}`}>
-                        ~3 mins away
-                      </span>
+                    <div className="font-extrabold text-xs">Cab / Car</div>
+                    <div className="text-[10px] mt-0.5 text-zinc-400">
+                      Comfort AC &bull; Prime &amp; Pooling
                     </div>
                   </div>
 
-                  {/* Tier 2: Go-Fair Eco-Pool */}
+                  {/* Category 2: Bike / Moto */}
                   <div
-                    onClick={() => setIsPooling(true)}
+                    onClick={() => {
+                      setVehicleMode("bike");
+                      setIsPooling(false);
+                      setMemberCount(1);
+                    }}
                     className={`cursor-pointer p-3 rounded-2xl border transition-all ${
-                      isPooling
+                      vehicleMode === "bike"
                         ? "border-emerald-600 bg-emerald-950 text-white shadow-sm ring-1 ring-emerald-500"
                         : "border-zinc-200 bg-white hover:border-zinc-300 text-zinc-900"
                     }`}
                   >
                     <div className="flex items-center justify-between mb-1">
-                      <span className="text-base">🌱</span>
+                      <span className="text-xl">🏍️</span>
                       <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/30 text-emerald-300">
-                        Save 20%
+                        Save ~45%
                       </span>
                     </div>
-                    <div className="font-extrabold text-xs">Go-Fair Eco-Pool</div>
-                    <div className="flex items-center justify-between mt-2 pt-2 border-t border-zinc-200/20">
-                      <span className="text-[11px] font-bold text-emerald-400">
-                        ₹{Math.round(directFare * 0.8)}
-                      </span>
-                      <span className={`text-[10px] ${isPooling ? "text-emerald-200" : "text-zinc-500"}`}>
-                        -1.8kg CO₂
-                      </span>
+                    <div className="font-extrabold text-xs">Bike / Moto</div>
+                    <div className="text-[10px] mt-0.5 text-emerald-400 font-medium">
+                      Fastest in traffic &bull; 1 Rider
                     </div>
                   </div>
                 </div>
               </div>
 
-              {/* Pooling Details Drawer */}
-              <PoolingCard
-                isPooled={isPooling}
-                onToggle={setIsPooling}
-                directFare={directFare}
-                pickupLabel={pickupLocation.name}
-                destLabel={destLocation.name}
-              />
+              {/* Traveling Members / Capacity Selector */}
+              <div className="p-3.5 rounded-2xl bg-zinc-50 border border-zinc-200/90 space-y-2">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <span className="text-xs font-bold text-zinc-900 block">Traveling Members</span>
+                    <span className="text-[10px] text-zinc-500">
+                      {vehicleMode === "bike"
+                        ? "Safety limit: Strictly 1 passenger on Bike"
+                        : isPooling
+                        ? "Eco-Pool limit: Max 2 passengers to share capacity"
+                        : "Cab capacity: Up to 4 passengers"}
+                    </span>
+                  </div>
+
+                  {vehicleMode === "bike" ? (
+                    <span className="text-xs font-black bg-zinc-900 text-emerald-400 px-3 py-1 rounded-xl border border-zinc-800">
+                      1 Rider
+                    </span>
+                  ) : (
+                    <div className="flex items-center gap-1.5 bg-white p-1 rounded-xl border border-zinc-200 shadow-2xs">
+                      {[1, 2, 3, 4].map((num) => {
+                        const disabled = isPooling && num > 2;
+                        return (
+                          <button
+                            key={num}
+                            type="button"
+                            disabled={disabled}
+                            onClick={() => setMemberCount(num)}
+                            className={`w-7 h-7 rounded-lg text-xs font-black transition-all cursor-pointer ${
+                              memberCount === num
+                                ? "bg-black text-white shadow-xs"
+                                : disabled
+                                ? "opacity-30 cursor-not-allowed text-zinc-400"
+                                : "hover:bg-zinc-100 text-zinc-700"
+                            }`}
+                            title={disabled ? "Eco-Pool is capped at 2 members" : `${num} passenger(s)`}
+                          >
+                            {num}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Ride Options / Tier Selector (Uber Style) */}
+              <div className="space-y-2">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-zinc-500 block">
+                  Select Ride Tier
+                </span>
+
+                {vehicleMode === "bike" ? (
+                  /* Single Bike Tier */
+                  <div className="p-3.5 rounded-2xl border border-emerald-600 bg-emerald-950 text-white shadow-sm ring-1 ring-emerald-500">
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-base">🏍️</span>
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/30 text-emerald-300">
+                        Fastest City Transit
+                      </span>
+                    </div>
+                    <div className="font-extrabold text-xs">Go-Fair Moto</div>
+                    <div className="text-[10px] text-zinc-300 mt-0.5">
+                      Agile single-rider commute &bull; Beats Bangalore junction jams
+                    </div>
+                    <div className="flex items-center justify-between mt-2.5 pt-2 border-t border-emerald-800/60">
+                      <span className="text-xs font-black text-emerald-400">
+                        ₹{directFare}
+                      </span>
+                      <span className="text-[10px] text-zinc-300">
+                        ~2 mins away
+                      </span>
+                    </div>
+                  </div>
+                ) : (
+                  /* Cab Tiers: Prime & Eco-Pool */
+                  <div className="grid grid-cols-2 gap-2.5">
+                    {/* Tier 1: Go-Fair Prime */}
+                    <div
+                      onClick={() => setIsPooling(false)}
+                      className={`cursor-pointer p-3 rounded-2xl border transition-all ${
+                        !isPooling
+                          ? "border-black bg-zinc-900 text-white shadow-sm"
+                          : "border-zinc-200 bg-white hover:border-zinc-300 text-zinc-900"
+                      }`}
+                    >
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-base">🚗</span>
+                        <span
+                          className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                            !isPooling ? "bg-white/20 text-white" : "bg-zinc-100 text-zinc-600"
+                          }`}
+                        >
+                          4 seats
+                        </span>
+                      </div>
+                      <div className="font-extrabold text-xs">Go-Fair Prime</div>
+                      <div className="flex items-center justify-between mt-2 pt-2 border-t border-zinc-200/20">
+                        <span
+                          className={`text-[11px] font-bold ${
+                            !isPooling ? "text-emerald-400" : "text-emerald-700"
+                          }`}
+                        >
+                          ₹{directFare}
+                        </span>
+                        <span
+                          className={`text-[10px] ${
+                            !isPooling ? "text-zinc-300" : "text-zinc-500"
+                          }`}
+                        >
+                          ~3 mins away
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Tier 2: Go-Fair Eco-Pool */}
+                    <div
+                      onClick={() => {
+                        setIsPooling(true);
+                        if (memberCount > 2) setMemberCount(2);
+                      }}
+                      className={`cursor-pointer p-3 rounded-2xl border transition-all ${
+                        isPooling
+                          ? "border-emerald-600 bg-emerald-950 text-white shadow-sm ring-1 ring-emerald-500"
+                          : "border-zinc-200 bg-white hover:border-zinc-300 text-zinc-900"
+                      }`}
+                    >
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-base">🌱</span>
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/30 text-emerald-300">
+                          Save 20%
+                        </span>
+                      </div>
+                      <div className="font-extrabold text-xs">Go-Fair Eco-Pool</div>
+                      <div className="flex items-center justify-between mt-2 pt-2 border-t border-zinc-200/20">
+                        <span className="text-[11px] font-bold text-emerald-400">
+                          ₹{Math.round(directFare * 0.8)}
+                        </span>
+                        <span
+                          className={`text-[10px] ${
+                            isPooling ? "text-emerald-200" : "text-zinc-500"
+                          }`}
+                        >
+                          -1.8kg CO₂
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Pooling Details Drawer (Cab mode only) */}
+              {vehicleMode === "cab" && (
+                <PoolingCard
+                  isPooled={isPooling}
+                  onToggle={(pooled) => {
+                    setIsPooling(pooled);
+                    if (pooled && memberCount > 2) setMemberCount(2);
+                  }}
+                  directFare={directFare}
+                  pickupLabel={pickupLocation.name}
+                  destLabel={destLocation.name}
+                />
+              )}
 
               {/* Uber/Ola Style Big Black Tactile CTA */}
               <div className="pt-2">
                 <button
                   type="submit"
                   disabled={bookingLoading}
-                  className="w-full bg-zinc-950 hover:bg-zinc-800 active:scale-[0.99] text-white py-3.5 px-5 rounded-2xl font-bold text-sm transition-all shadow-md flex items-center justify-between disabled:opacity-50"
+                  className="w-full bg-zinc-950 hover:bg-zinc-800 active:scale-[0.99] text-white py-3.5 px-5 rounded-2xl font-bold text-sm transition-all shadow-md flex items-center justify-between disabled:opacity-50 cursor-pointer"
                 >
-                  <span>
-                    {bookingLoading
-                      ? "Calculating & Dispatching..."
-                      : isPooling
-                      ? `Request Pooled Ride (₹${Math.round(directFare * 0.8)})`
-                      : `Request Ride Now (₹${directFare})`}
+                  <span className="flex items-center gap-2">
+                    <span>{vehicleMode === "bike" ? "🏍️" : isPooling ? "🌱" : "🚗"}</span>
+                    <span>
+                      {bookingLoading
+                        ? "Calculating & Dispatching..."
+                        : isPooling
+                        ? `Request Pooled Ride (₹${Math.round(directFare * 0.8)})`
+                        : `Request Ride Now (₹${directFare})`}
+                    </span>
                   </span>
-                  <span className="text-base">→</span>
+                  <span className="text-xs font-mono font-bold text-zinc-300">
+                    {memberCount} {memberCount === 1 ? "Member" : "Members"} &rarr;
+                  </span>
                 </button>
               </div>
             </form>
@@ -786,6 +955,22 @@ export default function PassengerWorkspace() {
                   </div>
                 </div>
               )}
+
+              {/* Mode & Capacity Telemetry */}
+              <div className="flex items-center justify-between px-3.5 py-2 rounded-xl bg-zinc-100 text-xs">
+                <div className="flex items-center gap-1.5 font-bold text-zinc-900">
+                  <span>Category:</span>
+                  <span className="uppercase text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                    {activeRide.match_metadata?.vehicleMode === "bike" ? "🏍️ Bike (Moto)" : "🚗 Cab (Prime)"}
+                  </span>
+                </div>
+                <div className="flex items-center gap-1 font-bold text-zinc-800">
+                  <span>Traveling Members:</span>
+                  <span className="font-mono bg-white px-2 py-0.5 rounded border border-zinc-200 text-zinc-950">
+                    👥 {Number(activeRide.match_metadata?.passengerCount) || 1} {Number(activeRide.match_metadata?.passengerCount) === 1 ? "Rider" : "Riders"}
+                  </span>
+                </div>
+              </div>
 
               {/* Trip Key Stats */}
               <div className="grid grid-cols-3 gap-3 py-3 border-y border-zinc-200 text-center">
@@ -1076,6 +1261,8 @@ export default function PassengerWorkspace() {
           </div>
         </div>
       )}
+      {/* AI Assistant Chatbot (Powered by Gemini) */}
+      <ChatbotWidget />
     </div>
   );
 }

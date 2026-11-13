@@ -28,3 +28,4 @@ describe("formatDuration utility", () => {
     expect(formatDuration(485)).toBe("8 hrs 5 mins");
   });
 });
+

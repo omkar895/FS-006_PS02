@@ -32,3 +32,4 @@ export function formatDuration(minutes?: number | null): string {
 export function formatCurrency(amount: number): string {
   return `₹${Math.round(amount)}`;
 }
+
