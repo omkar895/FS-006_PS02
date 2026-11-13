@@ -46,3 +46,4 @@ export async function GET(
     return apiError("INTERNAL_ERROR", message, 500);
   }
 }
+

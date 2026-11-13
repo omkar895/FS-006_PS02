@@ -163,6 +163,12 @@ export default function PassengerWorkspace() {
                   message: "🏁 Trip Completed! Thank you for riding with Go-Fair.",
                   type: "success",
                 });
+              } else if (newStatus === "reassigning") {
+                speakMilestone("Initial driver unavailable. Automatically reassigning to next best driver.");
+                setRealtimeToast({
+                  message: "🔄 Driver Unavailable: Reassigning to next best eligible driver automatically.",
+                  type: "warning",
+                });
               }
             }
           }

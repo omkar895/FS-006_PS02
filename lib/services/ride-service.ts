@@ -230,6 +230,14 @@ export class RideService {
         description: `Driver rejected ride offer: ${reasonCode || "UNAVAILABLE"}`,
       });
 
+      // Automatically trigger idempotent, bounded reassignment to the next candidate
+      try {
+        const { ReassignmentService } = await import("@/lib/services/reassignment-service");
+        await ReassignmentService.handleDriverException(rideId, "REJECTED");
+      } catch {
+        // Handled gracefully if retry limit reached
+      }
+
       return updatedRide as Ride;
     }
   }
