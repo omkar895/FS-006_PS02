@@ -1,0 +1,73 @@
+{
+  "project": "FairRide AI",
+  "source_problem_statement": "PS2 — Intelligent Ride Matching and Dynamic Driver Allocation System",
+  "pack_version": "1.0",
+  "prepared_date": "2026-11-13",
+  "purpose": "Antigravity-ready product, frontend/design, architecture, data, API, algorithm, security, test, deployment and phased build specifications",
+  "selected_stack": {
+    "frontend": "React + Next.js 16 App Router + TypeScript",
+    "backend": "Node.js runtime via Next.js Route Handlers",
+    "database_auth": "Supabase PostgreSQL + Supabase Auth",
+    "maps": "OpenStreetMap + Leaflet / React-Leaflet",
+    "demand_model": "Python + scikit-learn Gradient Boosting; 15-minute zone buckets and a chosen 30-minute forecast target"
+  },
+  "advanced_ps2_modules": [
+    "Predictive demand forecasting with a trained small model",
+    "Zone intelligence: simulated surge pricing and driver repositioning",
+    "Two-passenger ride pooling and pickup/drop-off route order",
+    "Multi-factor driver allocation and fairness explanation",
+    "Automatic reassignment and exception handling"
+  ],
+  "prompt_sequence": [
+    "prompts/00_REPOSITORY_AUDIT_AND_SCAFFOLD.md",
+    "prompts/01_DATABASE_AUTH_RLS.md",
+    "prompts/02_CORE_RIDE_LIFECYCLE.md",
+    "prompts/03_MAP_LOCATION_AND_DISCOVERY.md",
+    "prompts/04_MATCHING_FAIRNESS_AND_EXPLANATIONS.md",
+    "prompts/05_DEMAND_MODEL_AND_ZONE_INTELLIGENCE.md",
+    "prompts/06_POOLING_AND_REASSIGNMENT.md",
+    "prompts/07_ADMIN_CONTROL_CENTER_AND_SIMULATION.md",
+    "prompts/08_INTEGRATION_TESTS_ACCESSIBILITY_POLISH.md",
+    "prompts/09_DEPLOYMENT_DEMO_HANDOFF.md"
+  ],
+  "file_inventory": [
+    "AGENTS.md",
+    "DESIGN.md",
+    "FRONTEND.md",
+    "GEMINI.md",
+    "README.md",
+    "docs/01_PRODUCT_REQUIREMENTS.md",
+    "docs/02_PS2_TRACEABILITY.md",
+    "docs/03_ARCHITECTURE.md",
+    "docs/04_DESIGN_SYSTEM.md",
+    "docs/05_UX_SCREEN_SPECIFICATION.md",
+    "docs/06_DATABASE_AND_RLS.md",
+    "docs/07_API_AND_STATE_CONTRACTS.md",
+    "docs/08_ALGORITHMS_AND_DEMAND_MODEL.md",
+    "docs/09_SECURITY_PRIVACY_AND_FAILURES.md",
+    "docs/10_TESTING_AND_DEFINITION_OF_DONE.md",
+    "docs/11_DEMO_AND_SEED_DATA.md",
+    "docs/12_24_HOUR_EXECUTION_PLAN.md",
+    "docs/13_DEPLOYMENT_AND_ENVIRONMENT.md",
+    "docs/14_DECISIONS_AND_LIMITATIONS.md",
+    "docs/15_ANTIGRAVITY_MASTER_PROMPT.md",
+    "docs/16_REFERENCES.md",
+    "prompts/00_REPOSITORY_AUDIT_AND_SCAFFOLD.md",
+    "prompts/01_DATABASE_AUTH_RLS.md",
+    "prompts/02_CORE_RIDE_LIFECYCLE.md",
+    "prompts/03_MAP_LOCATION_AND_DISCOVERY.md",
+    "prompts/04_MATCHING_FAIRNESS_AND_EXPLANATIONS.md",
+    "prompts/05_DEMAND_MODEL_AND_ZONE_INTELLIGENCE.md",
+    "prompts/06_POOLING_AND_REASSIGNMENT.md",
+    "prompts/07_ADMIN_CONTROL_CENTER_AND_SIMULATION.md",
+    "prompts/08_INTEGRATION_TESTS_ACCESSIBILITY_POLISH.md",
+    "prompts/09_DEPLOYMENT_DEMO_HANDOFF.md",
+    "pack-manifest.json",
+    "SHA256SUMS.txt"
+  ],
+  "notes": [
+    "PS2 technology choices are alternatives; the pack deliberately selects one coherent stack rather than combining every alternative.",
+    "The PS2 brief requests zone/hour demand history but does not prescribe a numeric forecast horizon; this pack chooses a 30-minute target as an implementation decision.",
+    "Driver coordinates, demand history, forecast output, fares and simulation results must be labelled simulated or estimated unless backed by an actual configured data source."
+  ]
+}
