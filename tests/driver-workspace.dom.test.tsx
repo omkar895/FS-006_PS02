@@ -8,7 +8,7 @@ describe("DriverWorkspace DOM Component Testing", () => {
     vi.restoreAllMocks();
   });
 
-  it("renders driver workspace header, online toggle, and empty state", () => {
+  it("renders driver workspace header, online toggle, and empty state", async () => {
     vi.spyOn(global, "fetch").mockResolvedValue({
       ok: true,
       json: () => Promise.resolve({ data: [] }),
@@ -16,22 +16,31 @@ describe("DriverWorkspace DOM Component Testing", () => {
 
     render(<DriverWorkspace />);
 
-    expect(screen.getByText("Trip Operations")).toBeInTheDocument();
-    expect(screen.getByText("● ONLINE")).toBeInTheDocument();
-    expect(screen.getByText("No driver trips recorded yet.")).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByText("Trip Operations")).toBeInTheDocument();
+      expect(screen.getByText("● ONLINE")).toBeInTheDocument();
+      expect(screen.getByText("No driver trips recorded yet.")).toBeInTheDocument();
+    });
   });
 
-  it("allows driver to toggle online/offline state in DOM", () => {
+  it("allows driver to toggle online/offline state in DOM", async () => {
     vi.spyOn(global, "fetch").mockResolvedValue({
       ok: true,
       json: () => Promise.resolve({ data: [] }),
     } as Response);
 
     render(<DriverWorkspace />);
+
+    await waitFor(() => {
+      expect(screen.getByText("● ONLINE")).toBeInTheDocument();
+    });
 
     const toggleBtn = screen.getByText("● ONLINE");
     fireEvent.click(toggleBtn);
-    expect(screen.getByText("○ OFFLINE")).toBeInTheDocument();
+
+    await waitFor(() => {
+      expect(screen.getByText("○ OFFLINE")).toBeInTheDocument();
+    });
   });
 
   it("renders dispatch offer and handles accept action in DOM", async () => {
@@ -88,16 +97,20 @@ describe("DriverWorkspace DOM Component Testing", () => {
 
     render(<DriverWorkspace />);
 
-    expect(screen.getByText("Driver Welfare & Daily Equity Safeguard")).toBeInTheDocument();
-    expect(screen.getByText("Workload Fairness")).toBeInTheDocument();
-    expect(screen.getByText("Fleet Parity")).toBeInTheDocument();
-    expect(screen.getByText("Shift Fatigue")).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByText("Driver Welfare & Daily Equity Safeguard")).toBeInTheDocument();
+      expect(screen.getByText("Workload Fairness")).toBeInTheDocument();
+      expect(screen.getByText("Fleet Parity")).toBeInTheDocument();
+      expect(screen.getByText("Shift Fatigue")).toBeInTheDocument();
+    });
 
     const breakBtn = screen.getByText("Take 15m Break");
     fireEvent.click(breakBtn);
 
-    expect(screen.getByText("☕ On Break (Paused)")).toBeInTheDocument();
-    expect(screen.getByText(/Break active\. New dispatch offers paused for rest\./i)).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByText("☕ On Break (Paused)")).toBeInTheDocument();
+      expect(screen.getByText(/Break active\. New dispatch offers paused for rest\./i)).toBeInTheDocument();
+    });
   });
 
   it("displays high demand repositioning banner and triggers navigation", async () => {

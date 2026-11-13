@@ -221,24 +221,32 @@ export default function PublicTripTrackerPage() {
     <div className="min-h-screen bg-[#F4F3ED] py-6 px-4 md:px-8">
       <div className="max-w-4xl mx-auto space-y-6">
         {/* Navigation Bar */}
-        <div className="flex items-center justify-between bg-white border border-[#D6DCD2] p-4 rounded-xl shadow-sm">
-          <div className="flex items-center gap-2">
-            <span className="font-extrabold tracking-tight text-xl text-[#245A43]">Go-Fair</span>
-            <span className="text-[10px] px-2 py-0.5 rounded bg-[#EAF2ED] text-[#245A43] font-bold border border-[#245A43]/20">
-              LIVE TRIP TRACKER
-            </span>
+        <div className="flex items-center justify-between bg-white border border-zinc-200/90 p-4 rounded-2xl shadow-xs">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-lg bg-black text-white flex items-center justify-center font-black text-sm">
+              GF
+            </div>
+            <div>
+              <div className="flex items-center gap-1.5">
+                <span className="font-extrabold tracking-tight text-lg text-zinc-950">Go-Fair</span>
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+              </div>
+              <span className="text-[9px] uppercase tracking-wider font-bold text-zinc-400 block -mt-1">
+                Live Public Trip Tracker
+              </span>
+            </div>
           </div>
 
           <div className="flex items-center gap-2">
             <button
               onClick={handleCopyLink}
-              className="text-xs border border-[#D6DCD2] hover:bg-gray-50 text-[#35423A] font-semibold px-3 py-1.5 rounded transition-colors flex items-center gap-1.5"
+              className="text-xs border border-zinc-200 hover:bg-zinc-50 text-zinc-800 font-bold px-3.5 py-1.5 rounded-xl transition-all flex items-center gap-1.5 shadow-xs"
             >
               <span>{copied ? "✓ Copied Link" : "🔗 Copy Link"}</span>
             </button>
             <button
               onClick={handleShareWhatsApp}
-              className="text-xs bg-[#25D366] hover:bg-[#20bd5a] text-white font-semibold px-3 py-1.5 rounded transition-colors flex items-center gap-1.5 shadow-xs"
+              className="text-xs bg-[#25D366] hover:bg-[#20bd5a] text-white font-bold px-3.5 py-1.5 rounded-xl transition-all flex items-center gap-1.5 shadow-xs"
             >
               <span>💬 WhatsApp</span>
             </button>
@@ -246,17 +254,18 @@ export default function PublicTripTrackerPage() {
         </div>
 
         {/* Live Trip Header & Status */}
-        <div className="bg-white border border-[#D6DCD2] p-5 rounded-xl shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="bg-white border border-zinc-200/90 p-6 rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.06)] flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
-            <div className="flex items-center gap-2 mb-1">
-              <span className="text-xs font-bold text-[#68746C] uppercase tracking-wider">
+            <div className="flex items-center gap-2 mb-1.5">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+              <span className="text-xs font-bold text-zinc-500 uppercase tracking-wider">
                 Public Live Route Share
               </span>
-              <span className="text-[11px] bg-[#EAECE5] text-[#35423A] font-mono px-2 py-0.5 rounded">
+              <span className="text-[11px] bg-zinc-100 text-zinc-700 font-mono font-semibold px-2.5 py-0.5 rounded-full">
                 ID: {trip.id.slice(0, 8)}...
               </span>
             </div>
-            <h1 className="text-lg font-bold text-[#18231D]">
+            <h1 className="text-xl font-extrabold text-zinc-950">
               {trip.pickup_label} &rarr; {trip.destination_label}
             </h1>
           </div>
@@ -266,7 +275,7 @@ export default function PublicTripTrackerPage() {
             <button
               onClick={() => announceMilestone(`Ride is currently ${trip.status}. Destination is ${trip.destination_label}`)}
               title="Voice announcement"
-              className="text-sm p-1.5 rounded bg-[#F4F3ED] hover:bg-[#EAECE5] text-[#35423A]"
+              className="text-sm p-2 rounded-xl bg-zinc-100 hover:bg-zinc-200 text-zinc-700 transition-colors"
             >
               🔊
             </button>
@@ -274,7 +283,7 @@ export default function PublicTripTrackerPage() {
         </div>
 
         {/* Live OpenStreetMap Leaflet Surface */}
-        <div className="bg-white border border-[#D6DCD2] p-2 rounded-xl shadow-sm overflow-hidden">
+        <div className="bg-white border border-zinc-200/90 p-2 rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.06)] overflow-hidden">
           <OperationsMap
             pickup={{
               lat: trip.pickup_lat,
@@ -303,67 +312,71 @@ export default function PublicTripTrackerPage() {
         {/* Grid: Driver Information & Green Carbon Offset Card */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Driver & Vehicle Details */}
-          <div className="bg-white border border-[#D6DCD2] p-5 rounded-xl shadow-sm">
-            <h2 className="text-xs font-bold uppercase tracking-wider text-[#245A43] mb-3">
+          <div className="bg-white border border-zinc-200/90 p-6 rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.06)]">
+            <h2 className="text-xs font-bold uppercase tracking-wider text-zinc-500 mb-4">
               Assigned Vehicle & Driver
             </h2>
 
             {trip.driver ? (
-              <div className="space-y-3 text-xs">
-                <div className="flex items-center justify-between pb-2 border-b border-gray-100">
-                  <span className="text-[#68746C]">Vehicle & Plate:</span>
-                  <span className="font-bold text-[#18231D]">{trip.driver.vehicle_label}</span>
+              <div className="space-y-3.5 text-xs">
+                <div className="flex items-center justify-between pb-3 border-b border-zinc-100">
+                  <span className="text-zinc-500 font-medium">Vehicle Model:</span>
+                  <span className="font-extrabold text-zinc-950">{trip.driver.vehicle_label}</span>
                 </div>
-                <div className="flex items-center justify-between pb-2 border-b border-gray-100">
-                  <span className="text-[#68746C]">Fleet Category:</span>
-                  <span className="font-bold uppercase text-[#35423A]">{trip.driver.vehicle_type}</span>
+                <div className="flex items-center justify-between pb-3 border-b border-zinc-100">
+                  <span className="text-zinc-500 font-medium">Fleet Category:</span>
+                  <span className="font-extrabold uppercase text-zinc-950 bg-zinc-100 px-2.5 py-0.5 rounded-full text-[10px]">
+                    {trip.driver.vehicle_type}
+                  </span>
                 </div>
-                <div className="flex items-center justify-between pb-2 border-b border-gray-100">
-                  <span className="text-[#68746C]">Driver Service Rating:</span>
-                  <span className="font-bold text-amber-600">⭐ {trip.driver.rating || "4.92"} / 5.0</span>
+                <div className="flex items-center justify-between pb-3 border-b border-zinc-100">
+                  <span className="text-zinc-500 font-medium">Driver Service Rating:</span>
+                  <span className="font-black text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200 text-[11px]">
+                    ⭐ {trip.driver.rating || "4.92"} / 5.0
+                  </span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-[#68746C]">Dispatch Algorithm:</span>
-                  <span className="font-bold text-[#245A43]">Go-Fair Multi-Factor (PS2)</span>
+                  <span className="text-zinc-500 font-medium">Dispatch Algorithm:</span>
+                  <span className="font-extrabold text-emerald-700">Go-Fair Multi-Factor (PS2)</span>
                 </div>
               </div>
             ) : (
-              <p className="text-xs text-[#68746C] py-2">
+              <p className="text-xs text-zinc-500 py-3">
                 Matching optimal driver via fair allocation engine...
               </p>
             )}
           </div>
 
           {/* Green Mobility & Carbon Offset Counter (PS2 Feature) */}
-          <div className="bg-[#245A43] text-white p-5 rounded-xl shadow-sm relative overflow-hidden">
-            <div className="absolute right-3 top-3 opacity-10 text-6xl">🌱</div>
+          <div className="bg-zinc-950 text-white p-6 rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.06)] relative overflow-hidden">
+            <div className="absolute right-4 top-4 opacity-10 text-7xl select-none">🌱</div>
             <div className="flex items-center gap-2 mb-2">
-              <span className="text-lg">🌱</span>
-              <span className="text-xs font-bold uppercase tracking-wider text-[#D6EE74]">
+              <span className="text-xl">🌱</span>
+              <span className="text-xs font-bold uppercase tracking-wider text-emerald-400">
                 Green Mobility & Carbon Counter
               </span>
             </div>
 
-            <p className="text-xs text-white/90 mb-4">
+            <p className="text-xs text-zinc-300 mb-5 leading-relaxed">
               By riding with Go-Fair intelligent pooling and route optimization, your trip actively reduces city congestion and urban emissions.
             </p>
 
-            <div className="grid grid-cols-3 gap-2 text-center bg-black/20 p-3 rounded-lg border border-white/10">
+            <div className="grid grid-cols-3 gap-2.5 text-center bg-white/5 p-3.5 rounded-2xl border border-white/10">
               <div>
-                <span className="text-[10px] text-white/70 block uppercase">CO₂ Saved</span>
-                <span className="text-base font-extrabold text-[#D6EE74]">
+                <span className="text-[10px] text-zinc-400 block uppercase font-bold">CO₂ Saved</span>
+                <span className="text-lg font-black text-emerald-400">
                   {co2SavedKg} kg
                 </span>
               </div>
               <div>
-                <span className="text-[10px] text-white/70 block uppercase">Cruising Saved</span>
-                <span className="text-base font-extrabold text-white">
+                <span className="text-[10px] text-zinc-400 block uppercase font-bold">Cruising Saved</span>
+                <span className="text-lg font-black text-white">
                   {cruisingAvoidedKm} km
                 </span>
               </div>
               <div>
-                <span className="text-[10px] text-white/70 block uppercase">Tree Impact</span>
-                <span className="text-base font-extrabold text-[#D6EE74]">
+                <span className="text-[10px] text-zinc-400 block uppercase font-bold">Tree Impact</span>
+                <span className="text-lg font-black text-emerald-400">
                   {treesEquivalent} trees
                 </span>
               </div>

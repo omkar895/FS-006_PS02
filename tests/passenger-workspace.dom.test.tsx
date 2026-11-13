@@ -13,7 +13,7 @@ describe("PassengerWorkspace DOM Component Testing", () => {
     vi.restoreAllMocks();
   });
 
-  it("renders page title, preset pickers, and mocked map surface", () => {
+  it("renders page title, preset pickers, and mocked map surface", async () => {
     vi.spyOn(global, "fetch").mockImplementation((url) => {
       if (typeof url === "string" && url.includes("/api/drivers/nearby")) {
         return Promise.resolve({
@@ -29,11 +29,13 @@ describe("PassengerWorkspace DOM Component Testing", () => {
 
     render(<PassengerWorkspace />);
 
-    expect(screen.getByText("Book & Track Rides")).toBeInTheDocument();
-    expect(screen.getByLabelText("Pickup Location (Demo Presets)")).toBeInTheDocument();
-    expect(screen.getByLabelText("Destination Location (Demo Presets)")).toBeInTheDocument();
-    expect(screen.getByTestId("mocked-operations-map")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /Request Ride Now/i })).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByText("Book & Track Rides")).toBeInTheDocument();
+      expect(screen.getByLabelText("Pickup Location (Demo Presets)")).toBeInTheDocument();
+      expect(screen.getByLabelText("Destination Location (Demo Presets)")).toBeInTheDocument();
+      expect(screen.getByTestId("mocked-operations-map")).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: /Request Ride Now/i })).toBeInTheDocument();
+    });
   });
 
   it("renders nearby drivers when fetched via discovery API", async () => {
@@ -96,6 +98,10 @@ describe("PassengerWorkspace DOM Component Testing", () => {
     });
 
     render(<PassengerWorkspace />);
+
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: /Request Ride Now/i })).toBeInTheDocument();
+    });
 
     const submitBtn = screen.getByRole("button", { name: /Request Ride Now/i });
     fireEvent.click(submitBtn);
