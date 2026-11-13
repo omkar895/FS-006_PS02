@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import { Ride } from "@/lib/schemas/database";
 import OperationsMap from "@/components/maps/map-wrapper";
 import { PRESET_LOCATIONS } from "@/lib/utils/demo-locations";
+import { createClient } from "@/lib/auth/client";
 
 interface NearbyDriver {
   userId: string;
@@ -43,6 +44,19 @@ export default function PassengerWorkspace() {
   useEffect(() => {
     let ignore = false;
     async function load() {
+      try {
+        const supabase = createClient();
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session || session.user.email !== "passenger@fairride.demo") {
+          await supabase.auth.signInWithPassword({
+            email: "passenger@fairride.demo",
+            password: "DemoPassword123!",
+          });
+        }
+      } catch {
+        // Fallback for tests or offline
+      }
+
       try {
         const res = await fetch("/api/rides");
         if (res.ok && !ignore) {
@@ -126,13 +140,18 @@ export default function PassengerWorkspace() {
           <span className="text-xs font-semibold uppercase tracking-wider text-[#68746C]">Passenger Portal</span>
           <h1 className="text-2xl font-bold tracking-tight text-[#18231D]">Book & Track Rides</h1>
         </div>
-        <button
-          onClick={fetchRides}
-          disabled={loading}
-          className="text-xs font-medium px-3 py-1.5 border border-[#D6DCD2] rounded bg-white hover:bg-[#EAECE5] transition-colors"
-        >
-          {loading ? "Refreshing..." : "Refresh Status"}
-        </button>
+        <div className="flex items-center gap-3">
+          <span className="text-xs px-2.5 py-1 rounded bg-[#EAF2ED] text-[#245A43] border border-[#245A43]/20 font-medium">
+            ● Demo Passenger Active
+          </span>
+          <button
+            onClick={fetchRides}
+            disabled={loading}
+            className="text-xs font-medium px-3 py-1.5 border border-[#D6DCD2] rounded bg-white hover:bg-[#EAECE5] transition-colors"
+          >
+            {loading ? "Refreshing..." : "Refresh Status"}
+          </button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">

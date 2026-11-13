@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { Ride } from "@/lib/schemas/database";
+import { createClient } from "@/lib/auth/client";
 
 export default function DriverWorkspace() {
   const [rides, setRides] = useState<Ride[]>([]);
@@ -28,6 +29,19 @@ export default function DriverWorkspace() {
   useEffect(() => {
     let ignore = false;
     async function load() {
+      try {
+        const supabase = createClient();
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session || session.user.email !== "driver-alpha@fairride.demo") {
+          await supabase.auth.signInWithPassword({
+            email: "driver-alpha@fairride.demo",
+            password: "DemoPassword123!",
+          });
+        }
+      } catch {
+        // Fallback for tests or offline
+      }
+
       try {
         const res = await fetch("/api/rides");
         if (res.ok && !ignore) {
@@ -101,6 +115,9 @@ export default function DriverWorkspace() {
           <h1 className="text-2xl font-bold tracking-tight text-[#18231D]">Trip Operations</h1>
         </div>
         <div className="flex items-center gap-3">
+          <span className="text-xs px-2.5 py-1 rounded bg-[#EAF2ED] text-[#245A43] border border-[#245A43]/20 font-medium">
+            ● Driver Alpha (KA-01-EA-1001)
+          </span>
           <button
             onClick={() => setIsOnline(!isOnline)}
             className={`px-3 py-1.5 text-xs font-bold rounded transition-colors ${
