@@ -9,7 +9,7 @@
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "db:seed": "tsx scripts/seed-demo-data.ts"
+    "db:seed": "npx tsx --env-file=.env.local scripts/seed-demo-data.ts"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.7",
