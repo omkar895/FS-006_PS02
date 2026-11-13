@@ -74,3 +74,12 @@ export async function resetDemoFixtures() {
 
   console.log("Demo fixtures reset successfully.");
 }
+
+// Allow direct CLI execution
+if (import.meta.url.endsWith(process.argv[1]?.replace(/\\/g, "/") || "")) {
+  resetDemoFixtures().catch((err) => {
+    console.error("Error seeding demo fixtures:", err);
+    process.exit(1);
+  });
+}
+
