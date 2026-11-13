@@ -15,21 +15,30 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className="min-h-screen bg-[#F4F3ED] text-[#18231D] antialiased">
-        <header className="border-b border-[#D6DCD2] bg-white px-6 py-3 flex items-center justify-between">
+        <header className="border-b border-[#D6DCD2] bg-white px-6 py-2.5 flex items-center justify-between sticky top-0 z-50 shadow-[0_1px_3px_rgba(0,0,0,0.02)]">
           <div className="flex items-center gap-3">
-            <span className="font-bold tracking-tight text-lg text-[#245A43]">Go-Fair</span>
-            <span className="text-xs px-2 py-0.5 rounded bg-[#EAECE5] text-[#35423A] font-medium border border-[#D6DCD2]">
-              PS2 PROTOTYPE
-            </span>
+            <Link href="/overview" className="flex items-center gap-2">
+              <span className="font-extrabold tracking-tight text-xl text-[#245A43]">Go-Fair</span>
+              <span className="text-[10px] px-2 py-0.5 rounded bg-[#EAF2ED] text-[#245A43] font-bold border border-[#245A43]/20">
+                PS2 PROTOTYPE
+              </span>
+            </Link>
+            <div className="hidden sm:flex items-center gap-1.5 pl-3 border-l border-[#D6DCD2] text-[11px] text-[#68746C]">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#245A43] animate-pulse"></span>
+              <span>Bengaluru Fleet Grid</span>
+            </div>
           </div>
-          <nav className="flex items-center gap-4 text-sm font-medium text-[#35423A]">
-            <Link href="/login" className="px-2.5 py-1 text-xs font-semibold rounded bg-[#245A43] text-white hover:bg-[#1b4332] transition-colors">
+          <nav className="flex items-center gap-3 md:gap-5 text-xs font-semibold text-[#35423A]">
+            <Link href="/overview" className="hover:text-[#245A43] transition-colors py-1">Overview</Link>
+            <Link href="/passenger" className="hover:text-[#245A43] transition-colors py-1">Passenger</Link>
+            <Link href="/driver" className="hover:text-[#245A43] transition-colors py-1">Driver</Link>
+            <Link href="/admin" className="hover:text-[#245A43] transition-colors py-1">Admin Console</Link>
+            <Link
+              href="/login"
+              className="px-3 py-1.5 text-xs font-bold rounded bg-[#245A43] text-white hover:bg-[#1b4332] shadow-sm transition-colors"
+            >
               Sign In
             </Link>
-            <Link href="/overview" className="hover:text-[#245A43] transition-colors">Overview</Link>
-            <Link href="/passenger" className="hover:text-[#245A43] transition-colors">Passenger</Link>
-            <Link href="/driver" className="hover:text-[#245A43] transition-colors">Driver</Link>
-            <Link href="/admin" className="hover:text-[#245A43] transition-colors">Admin Console</Link>
           </nav>
         </header>
         <main>{children}</main>
