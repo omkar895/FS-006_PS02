@@ -5,6 +5,9 @@ import { Ride } from "@/lib/schemas/database";
 import OperationsMap from "@/components/maps/map-wrapper";
 import { PRESET_LOCATIONS } from "@/lib/utils/demo-locations";
 import { createClient } from "@/lib/auth/client";
+import MatchExplanationCard from "@/components/dispatch/match-explanation-card";
+import LifecycleSimulator from "@/components/dispatch/lifecycle-simulator";
+import PoolingCard from "@/components/dispatch/pooling-card";
 
 interface NearbyDriver {
   userId: string;
@@ -25,6 +28,16 @@ export default function PassengerWorkspace() {
   // Selected locations
   const [pickupLocation, setPickupLocation] = useState(PRESET_LOCATIONS[0]);
   const [destLocation, setDestLocation] = useState(PRESET_LOCATIONS[1]);
+  const [isPooling, setIsPooling] = useState(false);
+
+  // Dynamic direct fare estimate
+  const currentDistanceKm = Number(
+    Math.hypot(
+      (destLocation.lat - pickupLocation.lat) * 111,
+      (destLocation.lng - pickupLocation.lng) * 85
+    ).toFixed(2)
+  );
+  const directFare = Math.max(50, Math.round(50 + currentDistanceKm * 15));
 
   const fetchRides = async () => {
     setLoading(true);
@@ -217,13 +230,25 @@ export default function PassengerWorkspace() {
                 </span>
               </div>
 
+              <PoolingCard
+                isPooled={isPooling}
+                onToggle={setIsPooling}
+                directFare={directFare}
+                pickupLabel={pickupLocation.name}
+                destLabel={destLocation.name}
+              />
+
               <div className="pt-2">
                 <button
                   type="submit"
                   disabled={bookingLoading}
                   className="w-full bg-[#245A43] hover:bg-[#1b4332] text-white py-2.5 px-4 rounded font-medium text-sm transition-colors disabled:opacity-50"
                 >
-                  {bookingLoading ? "Calculating & Dispatching..." : "Request Ride Now"}
+                  {bookingLoading
+                    ? "Calculating & Dispatching..."
+                    : isPooling
+                    ? `Request Pooled Ride (₹${Math.round(directFare * 0.8)})`
+                    : `Request Ride Now (₹${directFare})`}
                 </button>
               </div>
             </form>
@@ -284,6 +309,20 @@ export default function PassengerWorkspace() {
                   <span className="font-bold text-[#18231D] text-sm">{activeRide.trip_eta_minutes || "--"} mins</span>
                 </div>
               </div>
+
+              {/* Pitch Feature 1: Why This Driver? Explainability */}
+              <MatchExplanationCard
+                metadata={activeRide.match_metadata}
+                assignedDriverId={activeRide.assigned_driver_id}
+                pickupEtaMinutes={activeRide.pickup_eta_minutes}
+              />
+
+              {/* Pitch Feature 2: Solo Presenter Lifecycle Simulator */}
+              <LifecycleSimulator
+                rideId={activeRide.id}
+                currentStatus={activeRide.status}
+                onRefresh={fetchRides}
+              />
             </div>
           ) : (
             <div className="bg-white border border-[#D6DCD2] rounded-lg p-5">
