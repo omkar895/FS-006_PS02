@@ -21,25 +21,37 @@
 ---
 
 ## Phase 03 — Maps, Location and Nearby Driver Discovery (COMPLETED)
+- **OpenStreetMap & Leaflet:** Isolated client component map with visual pins and legal attribution.
+- **Nearby Discovery:** Driver discovery query with 15-minute stale telemetry filter and Haversine distance projection.
+- **DOM Testing:** Component testing with jsdom and React Testing Library.
+- **Verification:** 25/25 tests passed across 8 test suites.
 
-### 1. Leaflet & OpenStreetMap Integration
-- **Client Component Separation:** [components/maps/operations-map.tsx](file:///c:/Users/omkar/OneDrive/Desktop/hackvally/components/maps/operations-map.tsx) and dynamic wrapper [components/maps/map-wrapper.tsx](file:///c:/Users/omkar/OneDrive/Desktop/hackvally/components/maps/map-wrapper.tsx) prevents SSR hydration mismatches.
-- **OpenStreetMap Attribution:** Tile attribution strictly maintained (`© OpenStreetMap contributors`).
-- **Restrained Markers & Visual Language:** Color-coded pin indicators for Pickup (Forest Green), Destination (Red Accent), and Simulated Drivers (Muted Teal), plus dashed straight-line route indicator.
-- **Preset Demo Locations:** [lib/utils/demo-locations.ts](file:///c:/Users/omkar/OneDrive/Desktop/hackvally/lib/utils/demo-locations.ts) providing transit, commercial, and residential hubs for reproducible testing without reliance on rate-limited public geocoders.
+---
 
-### 2. Driver Discovery & Stale Telemetry Filter
-- **Discovery Service:** [lib/services/driver-discovery.ts](file:///c:/Users/omkar/OneDrive/Desktop/hackvally/lib/services/driver-discovery.ts)
-  - Filters out `busy`, `offline`, and stale driver telemetry older than 15 minutes.
-  - Projects straight-line Haversine distance and indicative pickup ETA ($assumedSpeed = 30\text{ km/h} + 2\text{ min buffer}$).
-- **API Endpoint:** `GET /api/drivers/nearby?lat=&lng=` validates input coordinates and returns nearest eligible drivers sorted by distance.
-- **Accessible List Alternative:** Passenger workspace renders both the interactive map view and a responsive tabular card list of nearby drivers.
+## Phase 04 — Intelligent Allocation, Fairness Scoring and Explanation (COMPLETED)
+
+### 1. Fairness Dispatch Engine (`lib/algorithms/dispatch-matching.ts`)
+- **Eligibility Guardrails:** Pre-filters drivers strictly by availability (`available`), absence of existing active rides, coordinate freshness threshold (15 mins), and maximum pickup ETA threshold (15 mins).
+- **Normalized 5-Factor Scoring Scale:**
+  $$\text{FairRide Score} = 0.30 \times \text{ETA} + 0.25 \times \text{Idle Time} + 0.20 \times \text{Distance} + 0.15 \times \text{Workload} + 0.10 \times \text{Reliability}$$
+  - **Pickup ETA (0.30):** Normalized against `maxPickupEtaMinutes`.
+  - **Idle Time (0.25):** Normalized against `idleSaturationMinutes` (60 mins cap).
+  - **Distance (0.20):** Straight-line Haversine quality.
+  - **Workload Balancing (0.15):** Inverse penalty on trips completed today to prevent driver burnout.
+  - **Acceptance Reliability (0.10):** Laplace smoothed ratio $\frac{\text{accepted} + 2}{\text{offered} + 4}$.
+- **Deterministic Tie-Breaking:** Highest score $\rightarrow$ lowest ETA $\rightarrow$ highest idle time $\rightarrow$ alphanumeric `userId`.
+- **Baseline Generator:** Produces exact-same-snapshot nearest-eligible-driver baseline for comparison.
+- **Truthful Explanation Generator:** Stores real factor contributions and human-readable explanation in `rides.match_metadata`.
+
+### 2. Integration & Endpoints
+- **Service Layer (`lib/services/ride-service.ts`):** Integrated `executeDispatchMatching()` directly into passenger ride creation.
+- **Dispatch Inspection API (`app/api/dispatch/route.ts`):** `GET /api/dispatch?lat=&lng=&maxPickupEtaMinutes=` returns full candidate ranking, scores, contributions, and baseline comparison.
 
 ### 3. Verification & Acceptance Evidence
 - **TypeScript Check:** `npm run typecheck` &rarr; PASS (`tsc --noEmit` exited 0).
 - **ESLint Check:** `npm run lint` &rarr; PASS (0 warnings, 0 errors).
-- **Unit & Integration Tests:** `npm test` &rarr; PASS (19/19 tests passed across 6 test suites, including [tests/driver-discovery.test.ts](file:///c:/Users/omkar/OneDrive/Desktop/hackvally/tests/driver-discovery.test.ts)).
-- **Production Build:** `npm run build` &rarr; PASS (Clean compilation of dynamic `api/drivers/nearby` and client map bundle).
+- **Unit & DOM Test Suite:** `npm test` &rarr; PASS (**29 / 29 tests passed across 9 test suites**).
+- **Production Build:** `npm run build` &rarr; PASS (Compiled dynamic `/api/dispatch` endpoint).
 
 ### 4. Next Step Recommendation
-Phase 03 is complete. Ready for **Phase 04 — Fairness-Aware Dispatch and Explanations** (`prompts/04_MATCHING_FAIRNESS_AND_EXPLANATIONS.md`).
+Phase 04 is complete. Ready for **Phase 05 — Trained Demand Model and Zone Intelligence** (`prompts/05_DEMAND_MODEL_AND_ZONE_INTELLIGENCE.md`).

@@ -3,6 +3,7 @@ import { createAdminClient } from "@/lib/auth/admin";
 import { Ride, RideStatus } from "@/lib/schemas/database";
 import { isValidRideTransition } from "@/lib/algorithms/state-machine";
 import { calculateHaversineDistanceKm, calculateFareEstimate } from "@/lib/algorithms/pricing";
+import { executeDispatchMatching, CandidateDriverInput } from "@/lib/algorithms/dispatch-matching";
 
 export interface CreateRideInput {
   passengerId: string;
@@ -45,17 +46,37 @@ export class RideService {
 
     const pricing = calculateFareEstimate(distanceKm);
 
-    // Auto-discover an available nearby driver if one is ready
+    // Execute fairness-aware dispatch matching over available fleet
     const admin = createAdminClient();
-    const { data: availableDrivers } = await admin
+    const { data: rawDrivers } = await admin
       .from("driver_profiles")
-      .select("user_id, current_lat, current_lng")
-      .eq("availability", "available")
-      .limit(1);
+      .select("*");
 
-    const assignedDriverId = availableDrivers && availableDrivers.length > 0
-      ? availableDrivers[0].user_id
-      : null;
+    const candidateInputs: CandidateDriverInput[] = (rawDrivers || []).map((d) => ({
+      userId: d.user_id,
+      vehicleLabel: d.vehicle_label,
+      vehicleType: d.vehicle_type,
+      lat: d.current_lat ?? 0,
+      lng: d.current_lng ?? 0,
+      availability: d.availability as "available" | "busy" | "offline",
+      locationRecordedAt: d.location_recorded_at,
+      activeRidesCount: 0,
+      completedRidesToday: d.completed_rides ?? 0,
+      acceptedCount: d.accepted_count ?? 0,
+      offeredCount: d.offered_count ?? 0,
+      idleMinutes: d.idle_since
+        ? Math.round((Date.now() - new Date(d.idle_since).getTime()) / (1000 * 60))
+        : 15,
+    }));
+
+    const dispatchResult = executeDispatchMatching(
+      candidateInputs,
+      input.pickupLat,
+      input.pickupLng
+    );
+
+    const assignedCandidate = dispatchResult.selectedCandidate;
+    const assignedDriverId = assignedCandidate ? assignedCandidate.userId : null;
 
     const newRideData = {
       passenger_id: input.passengerId,
@@ -68,7 +89,7 @@ export class RideService {
       destination_lng: input.destinationLng,
       status: "requested",
       distance_km: distanceKm,
-      pickup_eta_minutes: assignedDriverId ? 6.0 : null,
+      pickup_eta_minutes: assignedCandidate ? assignedCandidate.pickupEtaMinutes : null,
       trip_eta_minutes: pricing.tripEtaMinutes,
       base_fare: pricing.baseFare,
       distance_fare: pricing.distanceFare,
@@ -76,8 +97,12 @@ export class RideService {
       fare_estimate: pricing.fareEstimate,
       idempotency_key: input.idempotencyKey || null,
       match_metadata: {
-        engine: "FairRide Matching v1",
-        method: "Initial request dispatch",
+        engine: "FairRide Dispatch Engine v1",
+        method: dispatchResult.method,
+        score: assignedCandidate?.totalScore ?? null,
+        scoreContributions: assignedCandidate?.scoreContributions ?? null,
+        explanation: assignedCandidate?.explanation ?? "No driver immediately available within service threshold",
+        baselineMatch: dispatchResult.baselineCandidate?.userId ?? null,
       },
     };
 

@@ -108,3 +108,4 @@ describe("PassengerWorkspace DOM Component Testing", () => {
     });
   });
 });
+
