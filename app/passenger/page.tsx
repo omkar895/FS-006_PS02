@@ -53,6 +53,22 @@ export default function PassengerWorkspace() {
     type: "info" | "success" | "warning";
   } | null>(null);
 
+  const [shareCopied, setShareCopied] = useState(false);
+
+  const speakMilestone = (text: string) => {
+    if (typeof window !== "undefined" && "speechSynthesis" in window) {
+      try {
+        window.speechSynthesis.cancel();
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.rate = 1.05;
+        utterance.pitch = 1.0;
+        window.speechSynthesis.speak(utterance);
+      } catch {
+        // Fallback
+      }
+    }
+  };
+
   // Dynamic fare estimate (prioritizing real road distance when available)
   const effectiveDistanceKm = roadDistanceKm ?? Number(
     Math.hypot(
@@ -123,21 +139,25 @@ export default function PassengerWorkspace() {
             if (payload.eventType === "UPDATE" && payload.new) {
               const newStatus = (payload.new as { status: string }).status;
               if (newStatus === "accepted") {
+                speakMilestone("Driver accepted your ride and is en route.");
                 setRealtimeToast({
                   message: "🎉 Driver Accepted! Driver Alpha is en route to your pickup point.",
                   type: "success",
                 });
               } else if (newStatus === "arriving") {
+                speakMilestone("Your driver has arrived at the pickup location.");
                 setRealtimeToast({
                   message: "🚖 Driver Arriving! Your driver has reached the pickup location.",
                   type: "info",
                 });
               } else if (newStatus === "ongoing") {
+                speakMilestone("Trip has started. Live navigation active.");
                 setRealtimeToast({
                   message: "🛣️ Trip Underway! Live vehicle telemetry streaming on road.",
                   type: "info",
                 });
               } else if (newStatus === "completed") {
+                speakMilestone("Trip completed safely. Thank you for riding green with Go-Fair.");
                 setRealtimeToast({
                   message: "🏁 Trip Completed! Thank you for riding with Go-Fair.",
                   type: "success",
@@ -541,6 +561,56 @@ export default function PassengerWorkspace() {
                 assignedDriverId={activeRide.assigned_driver_id}
                 pickupEtaMinutes={activeRide.pickup_eta_minutes}
               />
+
+              {/* Public Live Trip Tracking Link */}
+              <div className="mt-4 flex flex-col sm:flex-row items-center justify-between gap-3 bg-[#F4F3ED] p-3 rounded-lg border border-[#D6DCD2]">
+                <div className="flex items-center gap-2">
+                  <span className="text-base">🔗</span>
+                  <div>
+                    <span className="text-xs font-bold text-[#18231D] block">Public Live Trip Tracking</span>
+                    <span className="text-[11px] text-[#68746C]">Share real-time moving map with friends or family</span>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
+                  <button
+                    onClick={() => {
+                      if (typeof window !== "undefined") {
+                        navigator.clipboard.writeText(`${window.location.origin}/trip/${activeRide.id}`);
+                        setShareCopied(true);
+                        setTimeout(() => setShareCopied(false), 2500);
+                      }
+                    }}
+                    className="px-3 py-1 bg-white hover:bg-gray-50 border border-[#D6DCD2] rounded text-xs font-semibold text-[#35423A] transition-colors"
+                  >
+                    {shareCopied ? "✓ Copied" : "Copy Link"}
+                  </button>
+                  <a
+                    href={`/trip/${activeRide.id}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="px-3 py-1 bg-[#245A43] hover:bg-[#1b4332] text-white rounded text-xs font-semibold transition-colors flex items-center gap-1"
+                  >
+                    <span>Track Live</span>
+                    <span>↗</span>
+                  </a>
+                </div>
+              </div>
+
+              {/* Green Mobility Impact Counter */}
+              <div className="mt-3 bg-[#EAF2ED] border border-[#245A43]/20 rounded-lg p-3 text-xs flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="text-lg">🌱</span>
+                  <div>
+                    <span className="font-bold text-[#245A43]">Green Mobility Impact</span>
+                    <p className="text-[11px] text-[#35423A]">
+                      Saved ~{(activeRide.distance_km * 0.17).toFixed(1)} kg CO₂ & avoided {(activeRide.distance_km * 0.4).toFixed(1)} km empty vehicle cruising.
+                    </p>
+                  </div>
+                </div>
+                <span className="text-[10px] bg-[#D6EE74] text-[#18231D] font-bold px-2 py-0.5 rounded shrink-0">
+                  PS2 ECO-CREDIT
+                </span>
+              </div>
 
               {/* Pitch Feature 2: Solo Presenter Lifecycle Simulator */}
               <LifecycleSimulator

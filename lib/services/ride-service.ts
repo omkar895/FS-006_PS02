@@ -317,4 +317,38 @@ export class RideService {
 
     return updatedRide as Ride;
   }
+
+  /**
+   * Public, unauthenticated read-only trip tracking for /trip/[id]
+   * Strips sensitive rider/driver personal PII, provides road progress and vehicle details.
+   */
+  static async getPublicRide(rideId: string) {
+    const admin = createAdminClient();
+    const { data: ride, error } = await admin
+      .from("rides")
+      .select("id, status, pickup_label, pickup_lat, pickup_lng, destination_label, destination_lat, destination_lng, distance_km, fare_estimate, requested_at, created_at, started_at, completed_at, assigned_driver_id, match_metadata")
+      .eq("id", rideId)
+      .maybeSingle();
+
+    if (error || !ride) {
+      return null;
+    }
+
+    let driverInfo = null;
+    if (ride.assigned_driver_id) {
+      const { data: driver } = await admin
+        .from("driver_profiles")
+        .select("vehicle_label, vehicle_type, current_lat, current_lng, rating")
+        .eq("user_id", ride.assigned_driver_id)
+        .maybeSingle();
+      if (driver) {
+        driverInfo = driver;
+      }
+    }
+
+    return {
+      ...ride,
+      driver: driverInfo,
+    };
+  }
 }
