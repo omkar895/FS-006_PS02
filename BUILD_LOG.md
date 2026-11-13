@@ -2,52 +2,46 @@
 
 ## Phase 00 — Repository Audit & Scaffold (COMPLETED)
 - **Scaffold:** Next.js 16 App Router, TypeScript, Tailwind CSS 4, ESLint 9, Node.js runtime.
-- **Tokens & Primitives:** Urban Mobility Editorial tokens implemented.
 - **Verification:** `npm run typecheck`, `npm run lint`, `npm test`, `npm run build` all passed.
 
 ---
 
 ## Phase 01 — Database, Authentication and Authorization (COMPLETED)
+- **Relational Schema:** PostgreSQL migration with profiles, driver_profiles, zones, rides, ride_events, demand_forecasts, ride_pools, simulation_runs/results.
+- **RLS & Protection:** 10 RLS policies, role elevation protection trigger, server-only service-role isolation.
+- **Verification:** 11/11 tests passed across unit and schema suites.
 
-### 1. Migrations & Schema Architecture
-- Migration written: [supabase/migrations/20261113000001_initial_schema_and_rls.sql](file:///c:/Users/omkar/OneDrive/Desktop/hackvally/supabase/migrations/20261113000001_initial_schema_and_rls.sql)
-- **Tables Defined with Strict Constraints & Foreign Keys:**
-  1. `profiles`: references `auth.users(id)` ON DELETE CASCADE; constrained to `('passenger', 'driver', 'admin')`.
-  2. `driver_profiles`: 1-to-1 with `profiles(id)`; availability check `('offline', 'available', 'busy')`; latitude/longitude checks; metrics counters.
-  3. `zones`: unique `slug`, geographic center, radius, active flag.
-  4. `rides`: status lifecycle enum check; non-negative distance/fare checks; bounded surge multiplier (1.00–3.00); unique partial index `idx_one_active_ride_per_driver` ensuring one active assignment per driver; unique index `idx_passenger_idempotency`.
-  5. `ride_events`: append-only audit trail linking `ride_id` with state transitions and actor details.
-  6. `demand_forecasts`: unique constraint `(zone_id, forecast_for, model_version)`; model metrics storage.
-  7. `ride_pools` & `ride_pool_members`: pool status enum; route sequence; fare savings; multi-passenger constraints.
-  8. `simulation_runs` & `simulation_results`: scenario parameters, metrics, and per-driver evaluation tables.
+---
 
-### 2. Security & RLS Policy Matrix
-- Row Level Security (RLS) enabled on all 10 tables.
-- **Role Elevation Protection:** A PostgreSQL BEFORE UPDATE trigger (`tr_protect_profile_role`) strictly rejects client-side attempts to alter `role`.
-- **Permission Matrix:**
-  | Table | Passenger | Driver | Admin |
-  | :--- | :--- | :--- | :--- |
-  | `profiles` | Own profile only | Own profile only | Full operational read |
-  | `driver_profiles` | Active projection (lat/lng/status) | Own record update | Full operational read |
-  | `rides` | Own rides only | Assigned rides only | Full operational read |
-  | `ride_events` | Events for own rides | Events for assigned rides | Full operational read |
-  | `zones` | Read active zones | Read active zones | Full management |
-  | `demand_forecasts` | Read access | Read access | Full management |
-  | `ride_pools` | Own pooled rides | Assigned pool | Full operational read |
-  | `simulation_*` | Denied | Denied | Admin-only create & inspect |
+## Phase 02 — Core Ride Lifecycle (COMPLETED)
 
-### 3. Server vs Browser Separation
-- `lib/auth/client.ts`: Safe browser-side client using public anon key only.
-- `lib/auth/server.ts`: Server-side SSR cookie-aware client (`@supabase/ssr`).
-- `lib/auth/admin.ts`: Privileged client using `SUPABASE_SERVICE_ROLE_KEY`. Never exposed to browser bundle.
-- `lib/auth/guards.ts`: Server-side session verification `requireUserSession()` and role enforcement `requireRole()`.
+### 1. State Machine & Domain Algorithms
+- **Finite State Machine:** [lib/algorithms/state-machine.ts](file:///c:/Users/omkar/OneDrive/Desktop/hackvally/lib/algorithms/state-machine.ts) enforcing:
+  - Valid progression: `requested` &rarr; `accepted` &rarr; `arriving` &rarr; `ongoing` &rarr; `completed`.
+  - Allowed exceptions: Pre-pickup driver/passenger cancellation & reassigning.
+  - Terminal locks: `completed`, `cancelled`, `expired`, `unassigned` cannot be reopened.
+  - Strict role permission checks preventing passengers from mutating driver execution milestones.
+- **Pricing & Distance Estimation:** [lib/algorithms/pricing.ts](file:///c:/Users/omkar/OneDrive/Desktop/hackvally/lib/algorithms/pricing.ts) using Haversine formula and bounded surge ($1.00 - 3.00$).
 
-### 4. Verification Evidence
+### 2. Full-Stack End-to-End Implementation
+- **Service Layer:** [lib/services/ride-service.ts](file:///c:/Users/omkar/OneDrive/Desktop/hackvally/lib/services/ride-service.ts)
+  - `createRide()`: Validates coordinates, calculates distance/fare, discovers eligible driver, emits `RIDE_REQUESTED` event.
+  - `respondToOffer()`: Atomic state update with optimistic lock, toggles driver to `busy`, emits `RIDE_ACCEPTED`/`RIDE_REJECTED`.
+  - `updateStatus()`: Progresses `arriving` &rarr; `ongoing` &rarr; `completed`, sets completion timestamp and final fare, releases driver to `available`.
+- **API Route Handlers:**
+  - `POST /api/rides`: Authenticated passenger booking with Zod coordinate validation.
+  - `GET /api/rides`: Scoped query returning user's active and historical rides.
+  - `POST /api/rides/[id]/respond`: Assigned driver accept/decline action.
+  - `POST /api/rides/[id]/status`: Assigned driver Arriving/Ongoing/Completed transition endpoint.
+- **User Portals:**
+  - Passenger Portal: [app/passenger/page.tsx](file:///c:/Users/omkar/OneDrive/Desktop/hackvally/app/passenger/page.tsx) with booking rail, upfront estimate transparency, active status, and ride history.
+  - Driver Portal: [app/driver/page.tsx](file:///c:/Users/omkar/OneDrive/Desktop/hackvally/app/driver/page.tsx) with online/offline toggle, offer banner with payout/distance, step-by-step trip milestone progression buttons, and history.
+
+### 3. Verification & Test Evidence
 - **TypeScript Check:** `npm run typecheck` &rarr; PASS (`tsc --noEmit` exited 0).
 - **ESLint Check:** `npm run lint` &rarr; PASS (0 warnings, 0 errors).
-- **Unit & Schema Tests:** `npm test` &rarr; PASS (7/7 tests passed across `tests/smoke.test.ts` and `tests/database-schemas.test.ts`).
-- **Production Build:** `npm run build` &rarr; PASS (Turbopack compilation successful).
+- **Unit Test Suite:** `npm test` &rarr; PASS (18/18 tests passed across 5 test suites).
+- **Production Build:** `npm run build` &rarr; PASS (Next.js Turbopack compiled all static and dynamic routes cleanly).
 
-### 5. Next Step Recommendation
-Phase 01 is complete. We are ready to proceed with:
-- **Phase 02 — Core Ride Lifecycle** (`prompts/02_CORE_RIDE_LIFECYCLE.md`).
+### 4. Next Step Recommendation
+Phase 02 is complete and verified. Ready for **Phase 03 — Map, Location and Driver Discovery** (`prompts/03_MAP_LOCATION_AND_DISCOVERY.md`).
