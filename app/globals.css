@@ -29,3 +29,8 @@ body {
   outline: 2px solid var(--forest);
   outline-offset: 2px;
 }
+
+/* Ensure Leaflet map stays in its local stacking context below modals and dropdowns */
+.leaflet-container {
+  z-index: 0 !important;
+}

@@ -119,8 +119,8 @@ export default function OperationsMap({
 
   return (
     <div
-      className="relative rounded-lg overflow-hidden border border-[#D6DCD2] bg-[#EAECE5] shadow-inner"
-      style={{ height }}
+      className="relative z-0 isolate rounded-lg overflow-hidden border border-[#D6DCD2] bg-[#EAECE5] shadow-inner"
+      style={{ height, isolation: "isolate" }}
     >
       <MapContainer
         center={defaultCenter}
@@ -205,7 +205,7 @@ export default function OperationsMap({
       </MapContainer>
 
       {/* Map Legend Overlay */}
-      <div className="absolute bottom-3 left-3 z-[1000] bg-white/95 backdrop-blur-sm px-3 py-2 rounded border border-[#D6DCD2] text-[11px] shadow">
+      <div className="absolute bottom-3 left-3 z-[20] bg-white/95 backdrop-blur-sm px-3 py-2 rounded border border-[#D6DCD2] text-[11px] shadow">
         <span className="font-bold text-[#18231D] block mb-1">Map Legend</span>
         <div className="space-y-1">
           <div className="flex items-center gap-2">
