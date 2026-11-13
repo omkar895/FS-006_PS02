@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
+import { NextRequest } from "next/server";
 import { calculateFareEstimate } from "@/lib/algorithms/pricing";
 
 describe("Vehicle Selection (Cab vs Bike) & Fare Calculations", () => {
@@ -53,7 +54,7 @@ describe("AI Chatbot API Route Handlers", () => {
       }),
     });
 
-    const res = await POST(req as any);
+    const res = await POST(req as unknown as NextRequest);
     const json = await res.json();
 
     expect(res.status).toBe(200);
@@ -71,7 +72,7 @@ describe("AI Chatbot API Route Handlers", () => {
       }),
     });
 
-    const res = await POST(req as any);
+    const res = await POST(req as unknown as NextRequest);
     const json = await res.json();
 
     expect(res.status).toBe(400);
