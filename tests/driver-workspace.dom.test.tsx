@@ -79,4 +79,73 @@ describe("DriverWorkspace DOM Component Testing", () => {
       );
     });
   });
+
+  it("renders driver welfare metrics and handles 15m break pause", async () => {
+    vi.spyOn(global, "fetch").mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve({ data: [] }),
+    } as Response);
+
+    render(<DriverWorkspace />);
+
+    expect(screen.getByText("Driver Welfare & Daily Equity Safeguard")).toBeInTheDocument();
+    expect(screen.getByText("Workload Fairness")).toBeInTheDocument();
+    expect(screen.getByText("Fleet Parity")).toBeInTheDocument();
+    expect(screen.getByText("Shift Fatigue")).toBeInTheDocument();
+
+    const breakBtn = screen.getByText("Take 15m Break");
+    fireEvent.click(breakBtn);
+
+    expect(screen.getByText("☕ On Break (Paused)")).toBeInTheDocument();
+    expect(screen.getByText(/Break active\. New dispatch offers paused for rest\./i)).toBeInTheDocument();
+  });
+
+  it("displays high demand repositioning banner and triggers navigation", async () => {
+    vi.spyOn(global, "fetch").mockImplementation((url) => {
+      if (String(url).includes("/api/zones/intelligence")) {
+        return Promise.resolve({
+          ok: true,
+          json: () =>
+            Promise.resolve({
+              data: {
+                zoneIntelligence: [
+                  {
+                    zoneSlug: "residential-south",
+                    predictedDemand30m: 35.0,
+                    availableDriversSupply: 10,
+                    demandSupplyRatio: 3.5,
+                    simulatedSurgeMultiplier: 1.8,
+                    repositionRecommendation: {
+                      needed: true,
+                      deficit: 25,
+                      reason: "Peak demand surge in Koramangala.",
+                    },
+                  },
+                ],
+              },
+            }),
+        } as Response);
+      }
+      return Promise.resolve({
+        ok: true,
+        json: () => Promise.resolve({ data: [] }),
+      } as Response);
+    });
+
+    render(<DriverWorkspace />);
+
+    await waitFor(() => {
+      expect(screen.getByText(/High Demand Detected in Koramangala \/ HSR South/i)).toBeInTheDocument();
+      expect(screen.getByText("1.8x Surge")).toBeInTheDocument();
+      expect(screen.getByText("+25 Driver Deficit")).toBeInTheDocument();
+    });
+
+    const repoBtn = screen.getByRole("button", { name: /Reposition Now & Navigate/i });
+    fireEvent.click(repoBtn);
+
+    await waitFor(() => {
+      expect(screen.getByText(/En route to Koramangala \/ HSR South/i)).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: /Arrived at Zone/i })).toBeInTheDocument();
+    });
+  });
 });
