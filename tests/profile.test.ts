@@ -71,3 +71,4 @@ describe("Profile Management & Vehicle Specs API", () => {
     expect(json.error).toBe("Validation failed");
   });
 });
+

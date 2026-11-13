@@ -133,7 +133,7 @@ export default function PassengerWorkspace() {
       try {
         const supabase = createClient();
         const { data: { session } } = await supabase.auth.getSession();
-        if (!session || session.user.email !== "passenger@fairride.demo") {
+        if (!session) {
           await supabase.auth.signInWithPassword({
             email: "passenger@fairride.demo",
             password: "DemoPassword123!",

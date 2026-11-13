@@ -114,7 +114,7 @@ export default function DriverWorkspace() {
       try {
         const supabase = createClient();
         const { data: { session } } = await supabase.auth.getSession();
-        if (!session || session.user.email !== "driver-alpha@fairride.demo") {
+        if (!session) {
           await supabase.auth.signInWithPassword({
             email: "driver-alpha@fairride.demo",
             password: "DemoPassword123!",

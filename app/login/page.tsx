@@ -38,29 +38,51 @@ function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const initialRole = (searchParams.get("role") as RoleType) || "passenger";
+  const urlError = searchParams.get("error");
+  const urlErrorDesc = searchParams.get("error_description");
 
   const [activeRole, setActiveRole] = useState<RoleType>(
     ["passenger", "driver", "admin"].includes(initialRole) ? initialRole : "passenger"
   );
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [authMode, setAuthMode] = useState<"signin" | "signup">("signin");
   const [loading, setLoading] = useState(false);
   const [demoLoading, setDemoLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(() => {
+    if (urlError) {
+      if (urlError.includes("oauth_exchange_failed") || urlError.includes("invalid_client")) {
+        return "Google sign-in exchange failed. Please verify that your Google OAuth Client Secret in Supabase dashboard matches your Google Cloud Client Secret (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).";
+      }
+      return urlErrorDesc || urlError;
+    }
+    return null;
+  });
 
   const config = ROLE_CONFIGS[activeRole];
 
   const switchRole = (role: RoleType) => {
     setActiveRole(role);
     setError(null);
+    setSuccessMessage(null);
     setEmail("");
     setPassword("");
+  };
+
+  const navigateToDestination = (targetUrl: string) => {
+    if (typeof window !== "undefined") {
+      window.location.href = targetUrl;
+    } else {
+      router.push(targetUrl);
+    }
   };
 
   const handleGoogleLogin = async () => {
     setGoogleLoading(true);
     setError(null);
+    setSuccessMessage(null);
     try {
       const supabase = createClient();
       const redirectOrigin = typeof window !== "undefined" ? window.location.origin : "http://localhost:3000";
@@ -93,9 +115,37 @@ function LoginForm() {
     e.preventDefault();
     setLoading(true);
     setError(null);
+    setSuccessMessage(null);
 
     try {
       const supabase = createClient();
+
+      if (authMode === "signup") {
+        const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+          email,
+          password,
+          options: {
+            data: {
+              role: activeRole,
+              display_name: email.split("@")[0],
+            },
+          },
+        });
+
+        if (signUpError) {
+          throw new Error(signUpError.message);
+        }
+
+        if (signUpData.session) {
+          navigateToDestination(config.targetUrl);
+          return;
+        } else {
+          setSuccessMessage("Account created successfully! You can now sign in.");
+          setAuthMode("signin");
+          return;
+        }
+      }
+
       const { error: signInError } = await supabase.auth.signInWithPassword({
         email,
         password,
@@ -105,7 +155,7 @@ function LoginForm() {
         throw new Error(signInError.message);
       }
 
-      router.push(config.targetUrl);
+      navigateToDestination(config.targetUrl);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Failed to sign in");
     } finally {
@@ -116,6 +166,7 @@ function LoginForm() {
   const handleQuickDemoLogin = async () => {
     setDemoLoading(true);
     setError(null);
+    setSuccessMessage(null);
 
     try {
       const supabase = createClient();
@@ -128,7 +179,7 @@ function LoginForm() {
         throw new Error(signInError.message);
       }
 
-      router.push(config.targetUrl);
+      navigateToDestination(config.targetUrl);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Failed to sign in with demo account");
     } finally {
@@ -234,13 +285,50 @@ function LoginForm() {
           </button>
         </div>
 
+        {successMessage && (
+          <div className="p-3.5 text-xs bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-2xl font-bold">
+            ✓ {successMessage}
+          </div>
+        )}
+
         <div className="relative flex py-1 items-center">
           <div className="flex-grow border-t border-zinc-200"></div>
           <span className="flex-shrink mx-3 text-[10px] text-zinc-400 uppercase font-semibold">or custom credentials</span>
           <div className="flex-grow border-t border-zinc-200"></div>
         </div>
 
-        {/* Custom Credentials Form */}
+        {/* Custom Credentials Form with Sign In / Sign Up Mode */}
+        <div className="flex items-center bg-zinc-100 p-1 rounded-xl border border-zinc-200 text-xs font-bold">
+          <button
+            type="button"
+            onClick={() => {
+              setAuthMode("signin");
+              setError(null);
+            }}
+            className={`flex-1 py-1.5 rounded-lg transition-all ${
+              authMode === "signin"
+                ? "bg-white text-zinc-950 shadow-xs"
+                : "text-zinc-500 hover:text-zinc-900"
+            }`}
+          >
+            Sign In with Email
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setAuthMode("signup");
+              setError(null);
+            }}
+            className={`flex-1 py-1.5 rounded-lg transition-all ${
+              authMode === "signup"
+                ? "bg-white text-zinc-950 shadow-xs"
+                : "text-zinc-500 hover:text-zinc-900"
+            }`}
+          >
+            Create New Account
+          </button>
+        </div>
+
         <form onSubmit={handleCustomLogin} className="space-y-4 text-xs">
           <div>
             <label className="block font-bold text-zinc-900 mb-1">Email Address</label>
@@ -250,7 +338,7 @@ function LoginForm() {
               onChange={(e) => setEmail(e.target.value)}
               required
               placeholder={`e.g. your-email@domain.com`}
-              className="w-full px-3.5 py-2.5 border border-zinc-200 rounded-xl bg-white text-zinc-900 focus:outline-none focus:ring-2 focus:ring-black focus:border-black transition-all"
+              className="w-full px-3.5 py-2.5 border border-zinc-200 rounded-xl bg-white text-zinc-900 focus:outline-none focus:ring-2 focus:ring-black focus:border-black transition-all font-medium"
             />
           </div>
 
@@ -262,7 +350,7 @@ function LoginForm() {
               onChange={(e) => setPassword(e.target.value)}
               required
               placeholder="••••••••••••"
-              className="w-full px-3.5 py-2.5 border border-zinc-200 rounded-xl bg-white text-zinc-900 focus:outline-none focus:ring-2 focus:ring-black focus:border-black transition-all"
+              className="w-full px-3.5 py-2.5 border border-zinc-200 rounded-xl bg-white text-zinc-900 focus:outline-none focus:ring-2 focus:ring-black focus:border-black transition-all font-medium"
             />
           </div>
 
@@ -271,7 +359,11 @@ function LoginForm() {
             disabled={loading}
             className="w-full py-3 px-4 bg-zinc-950 hover:bg-zinc-800 text-white font-bold rounded-xl transition-all shadow-sm active:scale-[0.99]"
           >
-            {loading ? "Authenticating..." : `Sign In with Email`}
+            {loading
+              ? "Authenticating..."
+              : authMode === "signup"
+              ? `Create Account as ${config.label}`
+              : `Sign In with Email`}
           </button>
         </form>
       </div>
