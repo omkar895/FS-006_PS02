@@ -152,7 +152,7 @@ export default function DriverWorkspace() {
               ★ New Dispatch Offer Received
             </span>
             <span className="text-xs font-bold bg-[#D6EE74] text-[#18231D] px-2 py-0.5 rounded">
-              High FairRide Match
+              High Go-Fair Match
             </span>
           </div>
 

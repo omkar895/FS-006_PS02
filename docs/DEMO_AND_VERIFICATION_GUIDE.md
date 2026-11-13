@@ -1,6 +1,6 @@
-# FairRide AI — Verification & Demonstration Script
+# Go-Fair — Verification & Demonstration Script
 
-This document provides instructions for developers, reviewers, and judges to verify and test FairRide AI.
+This document provides instructions for developers, reviewers, and judges to verify and test Go-Fair.
 
 ---
 
@@ -46,7 +46,7 @@ The application will be accessible at `http://localhost:3000`.
 - Note the live **Nearby Available Drivers Projection** table updating dynamically via `GET /api/drivers/nearby`.
 - Click **"Request Ride Now"**:
   - Distance and upfront transparent fare estimate (₹50 base + ₹15/km) are calculated.
-  - The request is dispatched using the **FairRide 5-Factor Fairness Engine**.
+  - The request is dispatched using the **Go-Fair 5-Factor Fairness Engine**.
   - Review the active ride card displaying assigned driver telemetry and real-time state.
 
 ### Step 3: Driver Mobile Workspace (`/driver`)
@@ -74,7 +74,7 @@ The application will be accessible at `http://localhost:3000`.
 - Click **"Execute Simulation Run"** (or customize request count, fleet size, seed, max ETA).
 - Inspect the side-by-side comparative table:
   - **Nearest Eligible Baseline:** Standard greedy distance assignment with higher workload inequality ($\sigma \approx 3.4$).
-  - **FairRide AI Multi-Factor Engine:** Distributes trips equitably, significantly reducing workload standard deviation ($\sigma \approx 1.2$, a $>60\%$ fairness gain).
+  - **Go-Fair Multi-Factor Engine:** Distributes trips equitably, significantly reducing workload standard deviation ($\sigma \approx 1.2$, a $>60\%$ fairness gain).
   - Review the **Trade-off Assessment Bar**: Transparently reports the slight pickup ETA trade-off (e.g. $+0.4\text{ mins}$) required to achieve equitable driver earnings.
 
 ---

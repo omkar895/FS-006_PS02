@@ -109,7 +109,7 @@ function LoginForm() {
       {/* Header */}
       <div className="p-6 border-b border-[#D6DCD2] bg-[#FAF9F5]">
         <div className="flex items-center justify-between">
-          <span className="text-xs font-bold uppercase tracking-wider text-[#68746C]">FairRide AI Access</span>
+          <span className="text-xs font-bold uppercase tracking-wider text-[#245A43]">Go-Fair Access</span>
           <span className="text-xs px-2 py-0.5 rounded bg-[#EAF2ED] text-[#245A43] font-semibold border border-[#245A43]/20">
             {config.badge}
           </span>

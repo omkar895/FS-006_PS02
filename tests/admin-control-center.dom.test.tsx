@@ -117,7 +117,7 @@ describe("AdminControlCenter DOM & Integration Tests", () => {
 
     await waitFor(() => {
       expect(screen.getByText("Nearest Eligible Baseline")).toBeInTheDocument();
-      expect(screen.getByText("FairRide AI Multi-Factor")).toBeInTheDocument();
+      expect(screen.getByText("Go-Fair Multi-Factor")).toBeInTheDocument();
       expect(screen.getByText("Trade-off Assessment:")).toBeInTheDocument();
       expect(screen.getByText(/64.7% reduction/)).toBeInTheDocument();
     });

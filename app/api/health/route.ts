@@ -5,7 +5,7 @@ export const runtime = "nodejs";
 export async function GET() {
   return NextResponse.json({
     status: "ok",
-    service: "FairRide AI Prototype",
+    service: "Go-Fair Operations Platform",
     version: "0.1.0",
     phase: "00_REPOSITORY_AUDIT_AND_SCAFFOLD",
     timestamp: new Date().toISOString(),

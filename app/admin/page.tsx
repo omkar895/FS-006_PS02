@@ -260,7 +260,7 @@ export default function AdminControlCenter() {
               Dispatch Simulation Lab Configuration
             </h2>
             <p className="text-xs text-[#68746C] mb-4">
-              Compare Nearest-Eligible Baseline against FairRide Multi-Factor Dispatch over an identical, immutable scenario dataset.
+              Compare Nearest-Eligible Baseline against Go-Fair Multi-Factor Dispatch over an identical, immutable scenario dataset.
             </p>
 
             <form onSubmit={handleRunSimulation} className="grid grid-cols-2 md:grid-cols-4 gap-4 text-xs">
@@ -374,10 +374,10 @@ export default function AdminControlCenter() {
                     </div>
                   </div>
 
-                  {/* FairRide Column */}
+                  {/* Go-Fair Column */}
                   <div className="p-6 bg-green-50/20">
                     <div className="flex items-center justify-between mb-4">
-                      <h4 className="text-sm font-bold text-[#245A43]">FairRide AI Multi-Factor</h4>
+                      <h4 className="text-sm font-bold text-[#245A43]">Go-Fair Multi-Factor</h4>
                       <span className="text-xs px-2 py-0.5 rounded bg-[#D6EE74] text-[#18231D] font-bold">Fairness Engine</span>
                     </div>
 
@@ -415,7 +415,7 @@ export default function AdminControlCenter() {
                   <div>
                     <span className="font-bold text-[#18231D]">Trade-off Assessment: </span>
                     <span>
-                      FairRide achieved a <strong>{simResult.tradeOffAnalysis.workloadFairnessGainPercent}% reduction</strong> in workload inequality with an ETA trade-off of <strong>+{simResult.tradeOffAnalysis.etaTradeOffMinutes} mins</strong>.
+                      Go-Fair achieved a <strong>{simResult.tradeOffAnalysis.workloadFairnessGainPercent}% reduction</strong> in workload inequality with an ETA trade-off of <strong>+{simResult.tradeOffAnalysis.etaTradeOffMinutes} mins</strong>.
                     </span>
                   </div>
                   <span className="text-[11px] text-[#68746C]">

@@ -3,7 +3,7 @@ import Link from "next/link";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "FairRide AI — Intelligent Ride Matching & Allocation",
+  title: "Go-Fair — Intelligent Ride Matching & Allocation",
   description: "Academic prototype for PS2: Intelligent Ride Matching and Dynamic Driver Allocation System",
 };
 
@@ -17,7 +17,7 @@ export default function RootLayout({
       <body className="min-h-screen bg-[#F4F3ED] text-[#18231D] antialiased">
         <header className="border-b border-[#D6DCD2] bg-white px-6 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <span className="font-bold tracking-tight text-lg text-[#18231D]">FairRide AI</span>
+            <span className="font-bold tracking-tight text-lg text-[#245A43]">Go-Fair</span>
             <span className="text-xs px-2 py-0.5 rounded bg-[#EAECE5] text-[#35423A] font-medium border border-[#D6DCD2]">
               PS2 PROTOTYPE
             </span>

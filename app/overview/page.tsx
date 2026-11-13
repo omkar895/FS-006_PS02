@@ -5,7 +5,7 @@ export default function OverviewPage() {
     <div className="max-w-5xl mx-auto py-12 px-6">
       <div className="border-b border-[#D6DCD2] pb-6 mb-8">
         <h1 className="text-3xl font-bold tracking-tight text-[#18231D]">
-          FairRide AI Operations Platform
+          Go-Fair Operations Platform
         </h1>
         <p className="text-[#68746C] mt-2 text-base">
           PS2: Intelligent Ride Matching and Dynamic Driver Allocation System. Built with multi-factor fairness, predictive zone demand, two-passenger pooling, and automated reassignment.
@@ -87,7 +87,7 @@ export default function OverviewPage() {
       </div>
 
       <div className="mt-12 border-t border-[#D6DCD2] pt-6 flex items-center justify-between text-xs text-[#68746C]">
-        <span>FairRide AI Prototype &middot; Next.js 16 App Router &middot; Supabase PostgreSQL</span>
+        <span>Go-Fair Prototype &middot; Next.js 16 App Router &middot; Supabase PostgreSQL</span>
         <span>Status: Verification Complete</span>
       </div>
     </div>
