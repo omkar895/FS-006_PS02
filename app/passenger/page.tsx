@@ -286,46 +286,59 @@ export default function PassengerWorkspace() {
   );
 
   return (
-    <div className="max-w-7xl mx-auto py-8 px-6">
-      <div className="border-b border-[#D6DCD2] pb-4 mb-6 flex items-center justify-between">
+    <div className="max-w-7xl mx-auto py-8 px-4 sm:px-6">
+      {/* Top Header */}
+      <div className="border-b border-zinc-200/90 pb-5 mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <span className="text-xs font-semibold uppercase tracking-wider text-[#68746C]">Passenger Portal</span>
-          <h1 className="text-2xl font-bold tracking-tight text-[#18231D]">Book & Track Rides</h1>
+          <div className="flex items-center gap-2 mb-1">
+            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+            <span className="text-xs font-bold uppercase tracking-wider text-zinc-500">
+              Passenger Operations Terminal
+            </span>
+          </div>
+          <h1 className="text-3xl font-extrabold tracking-tight text-zinc-950">Book & Track Rides</h1>
         </div>
         <div className="flex items-center gap-3">
-          <span className="text-xs px-2.5 py-1 rounded bg-[#EAF2ED] text-[#245A43] border border-[#245A43]/20 font-medium">
-            ● Demo Passenger Active
+          <span className="text-xs px-3 py-1.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200 font-semibold flex items-center gap-1.5">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-600"></span>
+            Demo Passenger Active
           </span>
           <button
             onClick={fetchRides}
             disabled={loading}
-            className="text-xs font-medium px-3 py-1.5 border border-[#D6DCD2] rounded bg-white hover:bg-[#EAECE5] transition-colors"
+            className="text-xs font-semibold px-4 py-2 border border-zinc-200 rounded-full bg-white hover:bg-zinc-50 text-zinc-800 transition-all shadow-xs disabled:opacity-50"
           >
             {loading ? "Refreshing..." : "Refresh Status"}
           </button>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
         {/* Booking Form Rail */}
-        <div className="lg:col-span-4 bg-white border border-[#D6DCD2] rounded-lg p-6 shadow-sm flex flex-col justify-between">
+        <div className="lg:col-span-5 bg-white border border-zinc-200/90 rounded-3xl p-6 sm:p-7 shadow-[0_8px_30px_rgb(0,0,0,0.06)] flex flex-col justify-between">
           <div>
-            <h2 className="text-lg font-bold text-[#18231D] mb-4">Request a Ride</h2>
+            <div className="flex items-center justify-between mb-5">
+              <h2 className="text-xl font-extrabold tracking-tight text-zinc-950">Request a Ride</h2>
+              <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-zinc-100 text-zinc-700">
+                PS2 Fair Dispatch
+              </span>
+            </div>
 
             {error && (
-              <div className="mb-4 p-3 bg-red-50 border border-red-200 text-[#B7443E] text-xs rounded">
+              <div className="mb-5 p-3.5 bg-red-50 border border-red-200 text-red-700 text-xs rounded-xl font-medium">
                 {error}
               </div>
             )}
 
-            <div className="mb-4 flex items-center bg-[#F4F3ED] p-1 rounded border border-[#D6DCD2]">
+            {/* Input Mode Switcher */}
+            <div className="mb-5 flex items-center bg-zinc-100 p-1 rounded-xl border border-zinc-200/70">
               <button
                 type="button"
                 onClick={() => setInputMode("search")}
-                className={`flex-1 text-xs py-1.5 font-medium rounded transition-colors ${
+                className={`flex-1 text-xs py-2 font-bold rounded-lg transition-all ${
                   inputMode === "search"
-                    ? "bg-white text-[#18231D] shadow-xs border border-[#D6DCD2]"
-                    : "text-[#68746C] hover:text-[#18231D]"
+                    ? "bg-white text-zinc-950 shadow-xs"
+                    : "text-zinc-500 hover:text-zinc-900"
                 }`}
               >
                 📍 Real OSM Search
@@ -333,124 +346,209 @@ export default function PassengerWorkspace() {
               <button
                 type="button"
                 onClick={() => setInputMode("preset")}
-                className={`flex-1 text-xs py-1.5 font-medium rounded transition-colors ${
+                className={`flex-1 text-xs py-2 font-bold rounded-lg transition-all ${
                   inputMode === "preset"
-                    ? "bg-white text-[#18231D] shadow-xs border border-[#D6DCD2]"
-                    : "text-[#68746C] hover:text-[#18231D]"
+                    ? "bg-white text-zinc-950 shadow-xs"
+                    : "text-zinc-500 hover:text-zinc-900"
                 }`}
               >
                 🏢 Preset Hubs
               </button>
             </div>
 
-            <form onSubmit={handleBookRide} className="space-y-4 text-sm">
-              {inputMode === "search" ? (
-                <>
-                  <LocationSearchInput
-                    label="Pickup Location (Search Live Map)"
-                    placeholder="Search e.g. Indiranagar, MG Road, Airport..."
-                    currentName={pickupLocation.name}
-                    onSelectPlace={(place) =>
-                      setPickupLocation({
-                        id: `osm-${Date.now()}-pickup`,
-                        name: place.name,
-                        category: "commercial",
-                        lat: place.lat,
-                        lng: place.lng,
-                        description: "Real OSM Location",
-                      })
-                    }
-                  />
-
-                  <LocationSearchInput
-                    label="Destination Location (Search Live Map)"
-                    placeholder="Search e.g. Koramangala, Whitefield, HSR..."
-                    currentName={destLocation.name}
-                    onSelectPlace={(place) =>
-                      setDestLocation({
-                        id: `osm-${Date.now()}-dest`,
-                        name: place.name,
-                        category: "commercial",
-                        lat: place.lat,
-                        lng: place.lng,
-                        description: "Real OSM Location",
-                      })
-                    }
-                  />
-                </>
-              ) : (
-                <>
-                  <div>
-                    <label htmlFor="pickup-select" className="block text-xs font-medium text-[#35423A] mb-1">
-                      Pickup Location (Demo Presets)
-                    </label>
-                    <select
-                      id="pickup-select"
-                      aria-label="Pickup Location"
-                      value={pickupLocation.id}
-                      onChange={(e) => {
-                        const loc = PRESET_LOCATIONS.find((l) => l.id === e.target.value);
-                        if (loc) setPickupLocation(loc);
-                      }}
-                      className="w-full border border-[#D6DCD2] rounded px-3 py-2 text-xs focus:border-[#245A43] bg-white"
-                    >
-                      {PRESET_LOCATIONS.map((loc) => (
-                        <option key={loc.id} value={loc.id}>
-                          {loc.name} ({loc.description})
-                        </option>
-                      ))}
-                    </select>
-                    <span className="text-[11px] text-[#68746C] mt-1 block">
-                      Coordinates: {pickupLocation.lat.toFixed(4)}, {pickupLocation.lng.toFixed(4)}
-                    </span>
+            <form onSubmit={handleBookRide} className="space-y-5 text-sm">
+              {/* Connected Route Timeline Container (Uber/Ola Style) */}
+              <div className="bg-zinc-50 border border-zinc-200/90 rounded-2xl p-4 relative">
+                <div className="flex items-stretch gap-3">
+                  {/* Left Timeline Indicator */}
+                  <div className="flex flex-col items-center justify-between py-2 shrink-0">
+                    <div className="w-3.5 h-3.5 rounded-full border-2 border-emerald-600 bg-white flex items-center justify-center">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-600"></span>
+                    </div>
+                    <div className="w-0.5 flex-1 bg-zinc-300 my-1"></div>
+                    <div className="w-3.5 h-3.5 bg-zinc-950 rounded-xs flex items-center justify-center">
+                      <span className="w-1.5 h-1.5 bg-white rounded-xs"></span>
+                    </div>
                   </div>
 
-                  <div>
-                    <label htmlFor="dest-select" className="block text-xs font-medium text-[#35423A] mb-1">
-                      Destination Location (Demo Presets)
-                    </label>
-                    <select
-                      id="dest-select"
-                      aria-label="Destination Location"
-                      value={destLocation.id}
-                      onChange={(e) => {
-                        const loc = PRESET_LOCATIONS.find((l) => l.id === e.target.value);
-                        if (loc) setDestLocation(loc);
-                      }}
-                      className="w-full border border-[#D6DCD2] rounded px-3 py-2 text-xs focus:border-[#245A43] bg-white"
-                    >
-                      {PRESET_LOCATIONS.map((loc) => (
-                        <option key={loc.id} value={loc.id} disabled={loc.id === pickupLocation.id}>
-                          {loc.name} ({loc.description})
-                        </option>
-                      ))}
-                    </select>
-                    <span className="text-[11px] text-[#68746C] mt-1 block">
-                      Coordinates: {destLocation.lat.toFixed(4)}, {destLocation.lng.toFixed(4)}
-                    </span>
-                  </div>
-                </>
-              )}
+                  {/* Right Input Fields */}
+                  <div className="flex-1 space-y-3">
+                    {inputMode === "search" ? (
+                      <>
+                        <LocationSearchInput
+                          label="Pickup Location (Search Live Map)"
+                          placeholder="Search e.g. Indiranagar, MG Road, Airport..."
+                          currentName={pickupLocation.name}
+                          onSelectPlace={(place) =>
+                            setPickupLocation({
+                              id: `osm-${Date.now()}-pickup`,
+                              name: place.name,
+                              category: "commercial",
+                              lat: place.lat,
+                              lng: place.lng,
+                              description: "Real OSM Location",
+                            })
+                          }
+                        />
 
-              {/* Real Road Route Metrics Pill */}
-              <div className="p-2.5 rounded bg-[#F4F3ED] border border-[#D6DCD2] flex items-center justify-between text-xs">
+                        <div className="border-t border-zinc-200/70 pt-2">
+                          <LocationSearchInput
+                            label="Destination Location (Search Live Map)"
+                            placeholder="Search e.g. Koramangala, Whitefield, HSR..."
+                            currentName={destLocation.name}
+                            onSelectPlace={(place) =>
+                              setDestLocation({
+                                id: `osm-${Date.now()}-dest`,
+                                name: place.name,
+                                category: "commercial",
+                                lat: place.lat,
+                                lng: place.lng,
+                                description: "Real OSM Location",
+                              })
+                            }
+                          />
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <div>
+                          <label htmlFor="pickup-select" className="block text-[11px] font-bold uppercase tracking-wider text-zinc-500 mb-1">
+                            Pickup Location (Demo Presets)
+                          </label>
+                          <select
+                            id="pickup-select"
+                            aria-label="Pickup Location"
+                            value={pickupLocation.id}
+                            onChange={(e) => {
+                              const loc = PRESET_LOCATIONS.find((l) => l.id === e.target.value);
+                              if (loc) setPickupLocation(loc);
+                            }}
+                            className="w-full border border-zinc-200 rounded-xl px-3 py-2 text-xs font-semibold focus:ring-2 focus:ring-black focus:border-black bg-white text-zinc-900 transition-all"
+                          >
+                            {PRESET_LOCATIONS.map((loc) => (
+                              <option key={loc.id} value={loc.id}>
+                                {loc.name} ({loc.description})
+                              </option>
+                            ))}
+                          </select>
+                          <span className="text-[10px] text-zinc-500 mt-1 block">
+                            Coordinates: {pickupLocation.lat.toFixed(4)}, {pickupLocation.lng.toFixed(4)}
+                          </span>
+                        </div>
+
+                        <div className="border-t border-zinc-200/70 pt-2">
+                          <label htmlFor="dest-select" className="block text-[11px] font-bold uppercase tracking-wider text-zinc-500 mb-1">
+                            Destination Location (Demo Presets)
+                          </label>
+                          <select
+                            id="dest-select"
+                            aria-label="Destination Location"
+                            value={destLocation.id}
+                            onChange={(e) => {
+                              const loc = PRESET_LOCATIONS.find((l) => l.id === e.target.value);
+                              if (loc) setDestLocation(loc);
+                            }}
+                            className="w-full border border-zinc-200 rounded-xl px-3 py-2 text-xs font-semibold focus:ring-2 focus:ring-black focus:border-black bg-white text-zinc-900 transition-all"
+                          >
+                            {PRESET_LOCATIONS.map((loc) => (
+                              <option key={loc.id} value={loc.id} disabled={loc.id === pickupLocation.id}>
+                                {loc.name} ({loc.description})
+                              </option>
+                            ))}
+                          </select>
+                          <span className="text-[10px] text-zinc-500 mt-1 block">
+                            Coordinates: {destLocation.lat.toFixed(4)}, {destLocation.lng.toFixed(4)}
+                          </span>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Calculated Route Strip */}
+              <div className="p-3 rounded-xl bg-zinc-50 border border-zinc-200 flex items-center justify-between text-xs">
                 <div>
-                  <span className="text-[#68746C] block text-[11px]">Calculated Route</span>
-                  <span className="font-semibold text-[#18231D]">
+                  <span className="text-zinc-500 block text-[11px] font-medium">Calculated Route</span>
+                  <span className="font-bold text-zinc-900">
                     {effectiveDistanceKm} km {roadDurationMinutes ? `(~${roadDurationMinutes} mins)` : ""}
                   </span>
                 </div>
                 {isRealRoad ? (
-                  <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-[#245A43] text-white">
-                    🛣️ OSRM Live Road
+                  <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-emerald-600 text-white flex items-center gap-1">
+                    <span>🛣️</span>
+                    <span>OSRM Live Road</span>
                   </span>
                 ) : (
-                  <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-gray-200 text-gray-700">
+                  <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-zinc-200 text-zinc-700">
                     Straight Line
                   </span>
                 )}
               </div>
 
+              {/* Ride Options / Tier Selector (Uber Style) */}
+              <div className="space-y-2">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-zinc-500 block">
+                  Select Ride Tier
+                </span>
+                <div className="grid grid-cols-2 gap-2.5">
+                  {/* Tier 1: Go-Fair Prime */}
+                  <div
+                    onClick={() => setIsPooling(false)}
+                    className={`cursor-pointer p-3 rounded-2xl border transition-all ${
+                      !isPooling
+                        ? "border-black bg-zinc-900 text-white shadow-sm"
+                        : "border-zinc-200 bg-white hover:border-zinc-300 text-zinc-900"
+                    }`}
+                  >
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-base">🚗</span>
+                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                        !isPooling ? "bg-white/20 text-white" : "bg-zinc-100 text-zinc-600"
+                      }`}>
+                        4 seats
+                      </span>
+                    </div>
+                    <div className="font-extrabold text-xs">Go-Fair Prime</div>
+                    <div className="flex items-center justify-between mt-2 pt-2 border-t border-zinc-200/20">
+                      <span className={`text-[11px] font-bold ${!isPooling ? "text-emerald-400" : "text-emerald-700"}`}>
+                        ₹{directFare}
+                      </span>
+                      <span className={`text-[10px] ${!isPooling ? "text-zinc-300" : "text-zinc-500"}`}>
+                        ~3 mins away
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Tier 2: Go-Fair Eco-Pool */}
+                  <div
+                    onClick={() => setIsPooling(true)}
+                    className={`cursor-pointer p-3 rounded-2xl border transition-all ${
+                      isPooling
+                        ? "border-emerald-600 bg-emerald-950 text-white shadow-sm ring-1 ring-emerald-500"
+                        : "border-zinc-200 bg-white hover:border-zinc-300 text-zinc-900"
+                    }`}
+                  >
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-base">🌱</span>
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/30 text-emerald-300">
+                        Save 20%
+                      </span>
+                    </div>
+                    <div className="font-extrabold text-xs">Go-Fair Eco-Pool</div>
+                    <div className="flex items-center justify-between mt-2 pt-2 border-t border-zinc-200/20">
+                      <span className="text-[11px] font-bold text-emerald-400">
+                        ₹{Math.round(directFare * 0.8)}
+                      </span>
+                      <span className={`text-[10px] ${isPooling ? "text-emerald-200" : "text-zinc-500"}`}>
+                        -1.8kg CO₂
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Pooling Details Drawer */}
               <PoolingCard
                 isPooled={isPooling}
                 onToggle={setIsPooling}
@@ -459,24 +557,28 @@ export default function PassengerWorkspace() {
                 destLabel={destLocation.name}
               />
 
+              {/* Uber/Ola Style Big Black Tactile CTA */}
               <div className="pt-2">
                 <button
                   type="submit"
                   disabled={bookingLoading}
-                  className="w-full bg-[#245A43] hover:bg-[#1b4332] text-white py-2.5 px-4 rounded font-medium text-sm transition-colors disabled:opacity-50"
+                  className="w-full bg-zinc-950 hover:bg-zinc-800 active:scale-[0.99] text-white py-3.5 px-5 rounded-2xl font-bold text-sm transition-all shadow-md flex items-center justify-between disabled:opacity-50"
                 >
-                  {bookingLoading
-                    ? "Calculating & Dispatching..."
-                    : isPooling
-                    ? `Request Pooled Ride (₹${Math.round(directFare * 0.8)})`
-                    : `Request Ride Now (₹${directFare})`}
+                  <span>
+                    {bookingLoading
+                      ? "Calculating & Dispatching..."
+                      : isPooling
+                      ? `Request Pooled Ride (₹${Math.round(directFare * 0.8)})`
+                      : `Request Ride Now (₹${directFare})`}
+                  </span>
+                  <span className="text-base">→</span>
                 </button>
               </div>
             </form>
           </div>
 
-          <div className="mt-6 border-t border-[#D6DCD2] pt-4 text-xs text-[#68746C]">
-            <span className="font-semibold text-[#18231D]">
+          <div className="mt-6 border-t border-zinc-200 pt-4 text-[11px] text-zinc-500 leading-relaxed">
+            <span className="font-bold text-zinc-800">
               {isRealRoad ? "OSRM Live Road Navigation:" : "Straight-line Estimate:"}
             </span>{" "}
             {isRealRoad
@@ -486,83 +588,128 @@ export default function PassengerWorkspace() {
         </div>
 
         {/* Map & Live Discovery Center */}
-        <div className="lg:col-span-8 space-y-6">
+        <div className="lg:col-span-7 space-y-6">
           {/* Live Realtime Event Toast Banner */}
           {realtimeToast && (
             <div
-              className={`p-3 rounded-lg text-xs font-semibold flex items-center justify-between border shadow-xs animate-in fade-in slide-in-from-top duration-300 ${
+              className={`p-3.5 rounded-2xl text-xs font-semibold flex items-center justify-between border shadow-sm animate-in fade-in slide-in-from-top duration-300 ${
                 realtimeToast.type === "success"
-                  ? "bg-[#EAF2ED] text-[#245A43] border-[#245A43]/30"
-                  : "bg-blue-50 text-[#18231D] border-blue-200"
+                  ? "bg-emerald-50 text-emerald-900 border-emerald-200"
+                  : "bg-blue-50 text-blue-900 border-blue-200"
               }`}
             >
-              <div className="flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-[#245A43] animate-ping"></span>
+              <div className="flex items-center gap-2.5">
+                <span className="w-2 h-2 rounded-full bg-emerald-600 animate-ping"></span>
                 <span>{realtimeToast.message}</span>
               </div>
               <button
                 type="button"
                 onClick={() => setRealtimeToast(null)}
-                className="text-xs opacity-60 hover:opacity-100"
+                className="text-sm font-bold opacity-60 hover:opacity-100"
               >
                 &times;
               </button>
             </div>
           )}
 
-          {/* Operations Map */}
-          <OperationsMap
-            pickup={{
-              lat: pickupLocation.lat,
-              lng: pickupLocation.lng,
-              label: pickupLocation.name,
-            }}
-            destination={{
-              lat: destLocation.lat,
-              lng: destLocation.lng,
-              label: destLocation.name,
-            }}
-            routeCoordinates={routeCoordinates}
-            isRealRoad={isRealRoad}
-            activeDriver={activeRide ? assignedDriverCoords : null}
-            drivers={nearbyDrivers.map((d) => ({
-              id: d.userId,
-              lat: d.lat,
-              lng: d.lng,
-              label: `${d.vehicleLabel} (${d.distanceKm} km)`,
-              eta: d.estimatedPickupMinutes,
-            }))}
-            height="380px"
-          />
+          {/* Operations Map Surface */}
+          <div className="rounded-3xl overflow-hidden border border-zinc-200/90 shadow-[0_8px_30px_rgb(0,0,0,0.06)] bg-white">
+            <OperationsMap
+              pickup={{
+                lat: pickupLocation.lat,
+                lng: pickupLocation.lng,
+                label: pickupLocation.name,
+              }}
+              destination={{
+                lat: destLocation.lat,
+                lng: destLocation.lng,
+                label: destLocation.name,
+              }}
+              routeCoordinates={routeCoordinates}
+              isRealRoad={isRealRoad}
+              activeDriver={activeRide ? assignedDriverCoords : null}
+              drivers={nearbyDrivers.map((d) => ({
+                id: d.userId,
+                lat: d.lat,
+                lng: d.lng,
+                label: `${d.vehicleLabel} (${d.distanceKm} km)`,
+                eta: d.estimatedPickupMinutes,
+              }))}
+              height="390px"
+            />
+          </div>
 
-          {/* Active Ride or Live Nearby List */}
+          {/* Active Ride Card (Uber/Ola Live Tracking Experience) */}
           {activeRide ? (
-            <div className="border border-[#245A43] bg-white rounded-lg p-6 shadow-sm">
-              <div className="flex items-center justify-between mb-4">
-                <span className="text-xs font-bold uppercase tracking-wider text-[#245A43]">
-                  Active Ride in Progress
-                </span>
-                <span className="px-2.5 py-1 text-xs font-bold rounded-full bg-[#EAECE5] text-[#18231D] uppercase">
-                  {activeRide.status}
-                </span>
+            <div className="border border-zinc-200/90 bg-white rounded-3xl p-6 sm:p-7 shadow-[0_8px_30px_rgb(0,0,0,0.06)] space-y-5">
+              {/* Top Status & Ride PIN Badge */}
+              <div className="flex items-center justify-between pb-4 border-b border-zinc-200">
+                <div className="flex items-center gap-2.5">
+                  <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-ping"></span>
+                  <div>
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-600 block">
+                      Active Trip in Progress
+                    </span>
+                    <span className="text-sm font-extrabold uppercase text-zinc-950">
+                      {activeRide.status.replace(/_/g, " ")}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Uber-style Safety PIN */}
+                <div className="bg-zinc-900 text-white px-3.5 py-1.5 rounded-xl text-right shadow-xs">
+                  <span className="text-[9px] uppercase tracking-wider text-zinc-400 block font-semibold">
+                    RIDE PIN / OTP
+                  </span>
+                  <span className="text-sm font-black tracking-widest text-emerald-400">4829</span>
+                </div>
               </div>
 
-              <div className="grid grid-cols-3 gap-2 py-3 border-y border-[#D6DCD2] text-center text-xs">
-                <div>
-                  <span className="text-[#68746C] block">Straight-line Distance</span>
-                  <span className="font-bold text-[#18231D] text-sm">{activeRide.distance_km} km</span>
+              {/* Driver & Vehicle Identity Card */}
+              <div className="bg-zinc-50 border border-zinc-200/80 rounded-2xl p-4 flex items-center justify-between">
+                <div className="flex items-center gap-3.5">
+                  <div className="relative">
+                    <div className="w-12 h-12 rounded-full bg-zinc-900 text-white flex items-center justify-center font-bold text-sm shadow-sm">
+                      DA
+                    </div>
+                    <span className="absolute -bottom-1 -right-1 bg-amber-400 text-zinc-950 text-[10px] font-black px-1 rounded-full shadow-xs">
+                      ★ 4.9
+                    </span>
+                  </div>
+                  <div>
+                    <div className="text-xs font-bold text-zinc-900 flex items-center gap-1.5">
+                      <span>Driver Alpha</span>
+                      <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800 font-bold">
+                        Verified
+                      </span>
+                    </div>
+                    <span className="text-[11px] text-zinc-500 font-medium">Swift Dzire Prime (White)</span>
+                  </div>
                 </div>
-                <div>
-                  <span className="text-[#68746C] block">Estimated Fare</span>
-                  <span className="font-bold text-[#245A43] text-sm">₹{activeRide.fare_estimate}</span>
-                </div>
-                <div>
-                  <span className="text-[#68746C] block">Indicative ETA</span>
-                  <span className="font-bold text-[#18231D] text-sm">{activeRide.trip_eta_minutes || "--"} mins</span>
+
+                {/* Monospace License Plate Badge */}
+                <div className="bg-white border-2 border-zinc-900 text-zinc-950 px-3 py-1 rounded-lg font-mono font-black text-xs tracking-wider shadow-xs">
+                  KA-01-EQ-4491
                 </div>
               </div>
 
-              {/* Pitch Feature 1: Why This Driver? Explainability */}
+              {/* Trip Key Stats */}
+              <div className="grid grid-cols-3 gap-3 py-3 border-y border-zinc-200 text-center">
+                <div>
+                  <span className="text-zinc-500 block text-[11px] font-medium">Distance</span>
+                  <span className="font-extrabold text-zinc-950 text-base">{activeRide.distance_km} km</span>
+                </div>
+                <div>
+                  <span className="text-zinc-500 block text-[11px] font-medium">Total Fare</span>
+                  <span className="font-extrabold text-emerald-600 text-base">₹{activeRide.fare_estimate}</span>
+                </div>
+                <div>
+                  <span className="text-zinc-500 block text-[11px] font-medium">Indicative ETA</span>
+                  <span className="font-extrabold text-zinc-950 text-base">{activeRide.trip_eta_minutes || "--"} mins</span>
+                </div>
+              </div>
+
+              {/* Explainability Card */}
               <MatchExplanationCard
                 metadata={activeRide.match_metadata}
                 assignedDriverId={activeRide.assigned_driver_id}
@@ -570,12 +717,14 @@ export default function PassengerWorkspace() {
               />
 
               {/* Public Live Trip Tracking Link */}
-              <div className="mt-4 flex flex-col sm:flex-row items-center justify-between gap-3 bg-[#F4F3ED] p-3 rounded-lg border border-[#D6DCD2]">
-                <div className="flex items-center gap-2">
-                  <span className="text-base">🔗</span>
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-3 bg-zinc-50 p-4 rounded-2xl border border-zinc-200">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-xl bg-white border border-zinc-200 flex items-center justify-center text-sm shadow-xs">
+                    🔗
+                  </div>
                   <div>
-                    <span className="text-xs font-bold text-[#18231D] block">Public Live Trip Tracking</span>
-                    <span className="text-[11px] text-[#68746C]">Share real-time moving map with friends or family</span>
+                    <span className="text-xs font-bold text-zinc-900 block">Public Live Trip Tracking</span>
+                    <span className="text-[11px] text-zinc-500">Share real-time moving map with friends or family</span>
                   </div>
                 </div>
                 <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
@@ -587,7 +736,7 @@ export default function PassengerWorkspace() {
                         setTimeout(() => setShareCopied(false), 2500);
                       }
                     }}
-                    className="px-3 py-1 bg-white hover:bg-gray-50 border border-[#D6DCD2] rounded text-xs font-semibold text-[#35423A] transition-colors"
+                    className="px-3.5 py-1.5 bg-white hover:bg-zinc-50 border border-zinc-200 rounded-xl text-xs font-bold text-zinc-800 transition-all shadow-xs"
                   >
                     {shareCopied ? "✓ Copied" : "Copy Link"}
                   </button>
@@ -595,7 +744,7 @@ export default function PassengerWorkspace() {
                     href={`/trip/${activeRide.id}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="px-3 py-1 bg-[#245A43] hover:bg-[#1b4332] text-white rounded text-xs font-semibold transition-colors flex items-center gap-1"
+                    className="px-3.5 py-1.5 bg-black hover:bg-zinc-800 text-white rounded-xl text-xs font-bold transition-all shadow-xs flex items-center gap-1.5"
                   >
                     <span>Track Live</span>
                     <span>↗</span>
@@ -604,45 +753,45 @@ export default function PassengerWorkspace() {
               </div>
 
               {/* Green Mobility Impact Counter */}
-              <div className="mt-3 bg-[#EAF2ED] border border-[#245A43]/20 rounded-lg p-3 text-xs flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <span className="text-lg">🌱</span>
+              <div className="bg-emerald-50 border border-emerald-200/80 rounded-2xl p-4 text-xs flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <span className="text-xl">🌱</span>
                   <div>
-                    <span className="font-bold text-[#245A43]">Green Mobility Impact</span>
-                    <p className="text-[11px] text-[#35423A]">
+                    <span className="font-extrabold text-emerald-950">Green Mobility Impact</span>
+                    <p className="text-[11px] text-emerald-800 mt-0.5">
                       Saved ~{(activeRide.distance_km * 0.17).toFixed(1)} kg CO₂ & avoided {(activeRide.distance_km * 0.4).toFixed(1)} km empty vehicle cruising.
                     </p>
                   </div>
                 </div>
-                <span className="text-[10px] bg-[#D6EE74] text-[#18231D] font-bold px-2 py-0.5 rounded shrink-0">
+                <span className="text-[10px] bg-emerald-600 text-white font-extrabold px-2.5 py-1 rounded-full shrink-0 shadow-xs">
                   PS2 ECO-CREDIT
                 </span>
               </div>
 
-              {/* Multi-Modal Hub Connection (PS2 Feature) */}
+              {/* Multi-Modal Hub Connection */}
               {(() => {
                 const metro = findNearestMetroStation(activeRide.pickup_lat, activeRide.pickup_lng);
                 return (
-                  <div className="mt-3 bg-[#FAF9F5] border border-[#D6DCD2] rounded-lg p-3 text-xs flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <span className="text-base">🚆</span>
+                  <div className="bg-purple-50/70 border border-purple-200/80 rounded-2xl p-4 text-xs flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <span className="text-xl">🚆</span>
                       <div>
-                        <span className="font-semibold text-[#18231D]">
+                        <span className="font-bold text-purple-950">
                           Multi-Modal Metro Link: ~{metro.transitMinutes} mins to {metro.station.name}
                         </span>
-                        <span className="text-[11px] text-[#68746C] block">
+                        <span className="text-[11px] text-purple-800 block mt-0.5">
                           {metro.station.line} &bull; {metro.distanceKm} km first-mile connection
                         </span>
                       </div>
                     </div>
-                    <span className="text-[10px] bg-purple-100 text-purple-900 font-bold px-2 py-0.5 rounded shrink-0 border border-purple-200">
+                    <span className="text-[10px] bg-purple-700 text-white font-bold px-2.5 py-1 rounded-full shrink-0">
                       NAMMA METRO
                     </span>
                   </div>
                 );
               })()}
 
-              {/* Pitch Feature 2: Solo Presenter Lifecycle Simulator */}
+              {/* Lifecycle Simulator */}
               <LifecycleSimulator
                 rideId={activeRide.id}
                 currentStatus={activeRide.status}
@@ -650,27 +799,27 @@ export default function PassengerWorkspace() {
               />
             </div>
           ) : (
-            <div className="bg-white border border-[#D6DCD2] rounded-lg p-5">
-              <div className="flex items-center justify-between mb-3">
-                <h3 className="text-xs font-bold uppercase tracking-wider text-[#35423A]">
+            <div className="bg-white border border-zinc-200/90 rounded-3xl p-6 shadow-[0_8px_30px_rgb(0,0,0,0.06)]">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-xs font-bold uppercase tracking-wider text-zinc-500">
                   Nearby Available Drivers Projection ({nearbyDrivers.length} Available)
                 </h3>
-                <span className="text-[11px] text-[#68746C] bg-[#EAECE5] px-2 py-0.5 rounded">
+                <span className="text-[10px] font-bold text-zinc-600 bg-zinc-100 px-2.5 py-1 rounded-full">
                   SIMULATED TELEMETRY
                 </span>
               </div>
 
               {nearbyDrivers.length === 0 ? (
-                <p className="text-xs text-[#68746C]">No available drivers nearby within 15 mins radius.</p>
+                <p className="text-xs text-zinc-500">No available drivers nearby within 15 mins radius.</p>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   {nearbyDrivers.slice(0, 4).map((d) => (
-                    <div key={d.userId} className="border border-[#D6DCD2] rounded p-2.5 text-xs flex justify-between items-center">
+                    <div key={d.userId} className="border border-zinc-200 rounded-2xl p-3.5 text-xs flex justify-between items-center hover:border-zinc-300 transition-all bg-zinc-50/50">
                       <div>
-                        <span className="font-semibold text-[#18231D] block">{d.vehicleLabel}</span>
-                        <span className="text-[#68746C]">{d.distanceKm} km away</span>
+                        <span className="font-bold text-zinc-950 block">{d.vehicleLabel}</span>
+                        <span className="text-zinc-500">{d.distanceKm} km away</span>
                       </div>
-                      <span className="font-bold text-[#245A43] bg-[#F4F3ED] px-2 py-1 rounded border border-[#D6DCD2]">
+                      <span className="font-extrabold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200">
                         ~{d.estimatedPickupMinutes}m pickup
                       </span>
                     </div>
@@ -681,23 +830,23 @@ export default function PassengerWorkspace() {
           )}
 
           {/* Ride History */}
-          <div className="bg-white border border-[#D6DCD2] rounded-lg p-5">
-            <h3 className="text-xs font-bold uppercase tracking-wider text-[#35423A] mb-3">
+          <div className="bg-white border border-zinc-200/90 rounded-3xl p-6 shadow-[0_8px_30px_rgb(0,0,0,0.06)]">
+            <h3 className="text-xs font-bold uppercase tracking-wider text-zinc-500 mb-4">
               Recent Ride History
             </h3>
             {rides.length === 0 ? (
-              <p className="text-xs text-[#68746C]">No ride history records found.</p>
+              <p className="text-xs text-zinc-500">No ride history records found.</p>
             ) : (
-              <div className="divide-y divide-[#D6DCD2]">
+              <div className="divide-y divide-zinc-100">
                 {rides.slice(0, 3).map((ride) => (
-                  <div key={ride.id} className="py-2.5 flex items-center justify-between text-xs">
+                  <div key={ride.id} className="py-3 flex items-center justify-between text-xs">
                     <div>
-                      <div className="font-medium text-[#18231D]">{ride.pickup_label} &rarr; {ride.destination_label}</div>
-                      <div className="text-[#68746C]">
+                      <div className="font-bold text-zinc-900">{ride.pickup_label} &rarr; {ride.destination_label}</div>
+                      <div className="text-zinc-500 text-[11px] mt-0.5">
                         {new Date(ride.requested_at).toLocaleTimeString()} &middot; {ride.distance_km} km &middot; ₹{ride.fare_estimate}
                       </div>
                     </div>
-                    <span className="px-2 py-0.5 rounded font-medium uppercase border border-[#D6DCD2] text-[#35423A]">
+                    <span className="px-2.5 py-1 rounded-full font-bold uppercase text-[10px] bg-zinc-100 text-zinc-800">
                       {ride.status}
                     </span>
                   </div>

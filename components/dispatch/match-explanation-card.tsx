@@ -61,19 +61,19 @@ export default function MatchExplanationCard({
   ];
 
   return (
-    <div className="mt-4 border border-[#245A43]/30 bg-[#F7FAF8] rounded-lg p-4 text-xs">
+    <div className="mt-4 border border-zinc-200 bg-zinc-50/70 rounded-2xl p-4 text-xs">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <span className="font-bold text-[#245A43] uppercase tracking-wider text-[11px]">
+          <span className="font-black text-zinc-950 uppercase tracking-wider text-[11px]">
             ★ Why This Driver? (5-Factor Explainability)
           </span>
-          <span className="bg-[#245A43] text-white px-1.5 py-0.5 rounded text-[10px] font-bold">
+          <span className="bg-black text-white px-2 py-0.5 rounded-full text-[10px] font-black">
             Score: {totalScore}%
           </span>
         </div>
         <button
           onClick={() => setIsOpen(!isOpen)}
-          className="text-[#245A43] hover:underline font-semibold text-[11px]"
+          className="text-zinc-600 hover:text-black font-bold text-[11px] transition-colors"
         >
           {isOpen ? "Collapse Details ▲" : "Expand Rationale ▼"}
         </button>

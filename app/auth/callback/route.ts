@@ -23,3 +23,4 @@ export async function GET(request: Request) {
   // Fallback to target URL or login
   return NextResponse.redirect(`${origin}/login?error=oauth_exchange_failed`);
 }
+

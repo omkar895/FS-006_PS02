@@ -137,29 +137,32 @@ function LoginForm() {
   };
 
   return (
-    <div className="max-w-md mx-auto my-12 bg-white border border-[#D6DCD2] rounded-xl shadow-sm overflow-hidden">
+    <div className="max-w-md mx-auto my-12 bg-white border border-zinc-200/90 rounded-3xl shadow-[0_12px_40px_rgb(0,0,0,0.08)] overflow-hidden">
       {/* Header */}
-      <div className="p-6 border-b border-[#D6DCD2] bg-[#FAF9F5]">
+      <div className="p-7 border-b border-zinc-200/80 bg-zinc-50/60">
         <div className="flex items-center justify-between">
-          <span className="text-xs font-bold uppercase tracking-wider text-[#245A43]">Go-Fair Access</span>
-          <span className="text-xs px-2 py-0.5 rounded bg-[#EAF2ED] text-[#245A43] font-semibold border border-[#245A43]/20">
+          <div className="flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+            <span className="text-xs font-bold uppercase tracking-wider text-zinc-500">Go-Fair Access</span>
+          </div>
+          <span className="text-[11px] px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-800 font-bold border border-emerald-200">
             {config.badge}
           </span>
         </div>
-        <h1 className="text-2xl font-bold tracking-tight text-[#18231D] mt-1">Sign In to Continue</h1>
-        <p className="text-xs text-[#68746C] mt-1">{config.description}</p>
+        <h1 className="text-2xl font-black tracking-tight text-zinc-950 mt-2">Sign In to Continue</h1>
+        <p className="text-xs text-zinc-500 mt-1 leading-relaxed">{config.description}</p>
       </div>
 
       {/* Role Tabs */}
-      <div className="grid grid-cols-3 border-b border-[#D6DCD2] bg-[#F4F3ED] text-xs font-semibold">
+      <div className="grid grid-cols-3 border-b border-zinc-200 bg-zinc-100/70 p-1.5 gap-1.5 text-xs font-bold">
         {(["passenger", "driver", "admin"] as RoleType[]).map((role) => (
           <button
             key={role}
             onClick={() => switchRole(role)}
-            className={`py-3 text-center transition-colors border-b-2 ${
+            className={`py-2.5 text-center transition-all rounded-xl ${
               activeRole === role
-                ? "bg-white text-[#245A43] border-[#245A43] font-bold"
-                : "text-[#68746C] border-transparent hover:text-[#18231D]"
+                ? "bg-white text-zinc-950 shadow-xs font-extrabold"
+                : "text-zinc-500 hover:text-zinc-900"
             }`}
           >
             {ROLE_CONFIGS[role].label}
@@ -168,9 +171,9 @@ function LoginForm() {
       </div>
 
       {/* Main Content */}
-      <div className="p-6 space-y-5">
+      <div className="p-7 space-y-6">
         {error && (
-          <div className="p-3 text-xs bg-red-50 border border-red-200 text-[#B7443E] rounded">
+          <div className="p-3.5 text-xs bg-red-50 border border-red-200 text-red-700 rounded-2xl font-medium">
             {error}
           </div>
         )}
@@ -180,7 +183,7 @@ function LoginForm() {
           type="button"
           onClick={handleGoogleLogin}
           disabled={googleLoading}
-          className="w-full py-2.5 px-4 bg-white hover:bg-gray-50 text-[#18231D] text-xs font-semibold rounded-lg border border-[#D6DCD2] shadow-xs transition-colors flex items-center justify-center gap-2.5 disabled:opacity-50"
+          className="w-full py-3.5 px-4 bg-white hover:bg-zinc-50 text-zinc-900 text-xs font-bold rounded-2xl border border-zinc-200 shadow-xs transition-all flex items-center justify-center gap-3 active:scale-[0.99] disabled:opacity-50"
         >
           <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24">
             <path
@@ -204,69 +207,69 @@ function LoginForm() {
         </button>
 
         <div className="relative flex py-1 items-center">
-          <div className="flex-grow border-t border-[#D6DCD2]"></div>
-          <span className="flex-shrink mx-3 text-[10px] text-[#68746C] uppercase font-bold tracking-wider">
+          <div className="flex-grow border-t border-zinc-200"></div>
+          <span className="flex-shrink mx-3 text-[10px] text-zinc-400 uppercase font-black tracking-wider">
             or instant demo access
           </span>
-          <div className="flex-grow border-t border-[#D6DCD2]"></div>
+          <div className="flex-grow border-t border-zinc-200"></div>
         </div>
 
         {/* 1-Click Demo Login Box */}
-        <div className="p-4 bg-[#F2F6F3] border border-[#245A43]/20 rounded-lg">
+        <div className="p-5 bg-emerald-50/60 border border-emerald-200/80 rounded-2xl">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-xs font-bold text-[#245A43] uppercase tracking-wider">Fast Demo Access</span>
-            <span className="text-[10px] bg-white text-[#245A43] px-2 py-0.5 rounded border border-[#245A43]/20 font-medium">
+            <span className="text-xs font-black text-emerald-900 uppercase tracking-wider">Fast Demo Access</span>
+            <span className="text-[10px] bg-white text-emerald-800 px-2.5 py-0.5 rounded-full border border-emerald-200 font-bold">
               1-Click Pitch Ready
             </span>
           </div>
-          <p className="text-xs text-[#35423A] mb-3">
-            Sign in instantly as <span className="font-semibold">{config.demoEmail}</span> without typing credentials.
+          <p className="text-xs text-emerald-800 mb-3.5 leading-relaxed">
+            Sign in instantly as <span className="font-bold">{config.demoEmail}</span> without typing credentials.
           </p>
           <button
             onClick={handleQuickDemoLogin}
             disabled={demoLoading}
-            className="w-full py-2.5 px-4 bg-[#245A43] hover:bg-[#1b4332] text-white text-xs font-bold rounded shadow-sm transition-colors flex items-center justify-center gap-2"
+            className="w-full py-3 px-4 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl shadow-sm transition-all flex items-center justify-center gap-2 active:scale-[0.99]"
           >
             {demoLoading ? "Authenticating..." : `⚡ Sign In as Demo ${config.label}`}
           </button>
         </div>
 
         <div className="relative flex py-1 items-center">
-          <div className="flex-grow border-t border-[#D6DCD2]"></div>
-          <span className="flex-shrink mx-3 text-xs text-[#68746C] uppercase font-semibold">or custom credentials</span>
-          <div className="flex-grow border-t border-[#D6DCD2]"></div>
+          <div className="flex-grow border-t border-zinc-200"></div>
+          <span className="flex-shrink mx-3 text-[10px] text-zinc-400 uppercase font-semibold">or custom credentials</span>
+          <div className="flex-grow border-t border-zinc-200"></div>
         </div>
 
         {/* Custom Credentials Form */}
         <form onSubmit={handleCustomLogin} className="space-y-4 text-xs">
           <div>
-            <label className="block font-semibold text-[#18231D] mb-1">Email Address</label>
+            <label className="block font-bold text-zinc-900 mb-1">Email Address</label>
             <input
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
               placeholder={`e.g. your-email@domain.com`}
-              className="w-full px-3 py-2 border border-[#D6DCD2] rounded bg-white focus:outline-none focus:ring-1 focus:ring-[#245A43]"
+              className="w-full px-3.5 py-2.5 border border-zinc-200 rounded-xl bg-white text-zinc-900 focus:outline-none focus:ring-2 focus:ring-black focus:border-black transition-all"
             />
           </div>
 
           <div>
-            <label className="block font-semibold text-[#18231D] mb-1">Password</label>
+            <label className="block font-bold text-zinc-900 mb-1">Password</label>
             <input
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
               placeholder="••••••••••••"
-              className="w-full px-3 py-2 border border-[#D6DCD2] rounded bg-white focus:outline-none focus:ring-1 focus:ring-[#245A43]"
+              className="w-full px-3.5 py-2.5 border border-zinc-200 rounded-xl bg-white text-zinc-900 focus:outline-none focus:ring-2 focus:ring-black focus:border-black transition-all"
             />
           </div>
 
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-2.5 px-4 border border-[#D6DCD2] bg-white hover:bg-[#EAECE5] text-[#18231D] font-bold rounded transition-colors"
+            className="w-full py-3 px-4 bg-zinc-950 hover:bg-zinc-800 text-white font-bold rounded-xl transition-all shadow-sm active:scale-[0.99]"
           >
             {loading ? "Authenticating..." : `Sign In with Email`}
           </button>
@@ -274,8 +277,8 @@ function LoginForm() {
       </div>
 
       {/* Footer */}
-      <div className="px-6 py-3 bg-[#FAF9F5] border-t border-[#D6DCD2] text-center text-xs text-[#68746C]">
-        <Link href="/" className="hover:underline text-[#245A43]">
+      <div className="px-7 py-4 bg-zinc-50 border-t border-zinc-200 text-center text-xs text-zinc-500 font-medium">
+        <Link href="/" className="hover:text-black transition-colors">
           &larr; Return to System Overview
         </Link>
       </div>
