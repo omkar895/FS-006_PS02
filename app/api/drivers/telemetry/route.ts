@@ -49,3 +49,4 @@ export async function POST(req: NextRequest) {
     return apiError("TELEMETRY_FAILED", message, 500);
   }
 }
+

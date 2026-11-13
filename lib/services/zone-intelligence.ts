@@ -94,17 +94,17 @@ export class ZoneIntelligenceService {
     const supplyFloor = Math.max(1, availableSupply); // Protect against divide-by-zero
     const ratio = Math.round((predictedDemand / supplyFloor) * 100) / 100;
 
-    // Bounded surge calculation: 1.0x to 3.0x
-    let surgeMultiplier = 1.0;
-    if (ratio > 1.2) {
-      surgeMultiplier = Math.min(3.0, Math.round((1.0 + (ratio - 1.2) * 0.4) * 100) / 100);
-    }
+    // PS2 Bounded surge calculation: min(3.00, max(1.00, 1.0 + 0.3 * (P - 1)))
+    const surgeMultiplier = Math.min(
+      3.00,
+      Math.max(1.00, Math.round((1.0 + 0.3 * (ratio - 1.0)) * 100) / 100)
+    );
 
-    // Repositioning recommendation
-    const needed = ratio > 1.4 && availableSupply < predictedDemand * 0.7;
+    // Repositioning guidance when a zone deficit exceeds 1.4x (P > 1.4)
+    const needed = ratio > 1.4;
     const deficit = needed ? Math.max(1, Math.round(predictedDemand - availableSupply)) : 0;
     const reason = needed
-      ? `Forecast demand (${predictedDemand}) exceeds current driver supply (${availableSupply}) by 30+ mins ahead.`
+      ? `Forecast demand (${predictedDemand}) exceeds current driver supply (${availableSupply}) with zone pressure ${ratio.toFixed(2)}x (>1.4x threshold). Recommend repositioning idle vehicles.`
       : "Zone supply is currently adequate to meet predicted demand.";
 
     return {

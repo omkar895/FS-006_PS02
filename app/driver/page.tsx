@@ -16,6 +16,9 @@ export default function DriverWorkspace() {
   const [gpsCoords, setGpsCoords] = useState<{ lat: number; lng: number; accuracy: number } | null>(null);
   const [gpsError, setGpsError] = useState<string | null>(null);
 
+  // 30-Second Offer Expiry Countdown (PS2 Automatic Reassignment Guardrail)
+  const [offerCountdown, setOfferCountdown] = useState<number>(30);
+
   const fetchRides = async () => {
     setLoading(true);
     try {
@@ -173,6 +176,40 @@ export default function DriverWorkspace() {
     ["accepted", "arriving", "ongoing"].includes(r.status)
   );
 
+  const activeOfferId = activeOffer?.id;
+  const [prevOfferId, setPrevOfferId] = useState<string | undefined>(undefined);
+  if (activeOfferId !== prevOfferId) {
+    setPrevOfferId(activeOfferId);
+    setOfferCountdown(30);
+  }
+
+  // PS2 Automatic Reassignment: 30-second driver offer response timeout
+  useEffect(() => {
+    if (!activeOfferId) return;
+
+    const timer = setInterval(() => {
+      setOfferCountdown((prev) => {
+        if (prev <= 1) {
+          clearInterval(timer);
+          fetch(`/api/dispatch/${activeOfferId}/reassign`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ reason: "TIMEOUT" }),
+          })
+            .then(() => {
+              setMessage("30s offer response window elapsed. Go-Fair bounded reassignment engine has automatically re-offered this trip to the next eligible driver.");
+              fetchRides();
+            })
+            .catch(() => {});
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [activeOfferId]);
+
   return (
     <div className="max-w-4xl mx-auto py-8 px-6">
       <div className="border-b border-[#D6DCD2] pb-4 mb-6 flex items-center justify-between">
@@ -249,16 +286,42 @@ export default function DriverWorkspace() {
         </div>
       )}
 
-      {/* Incoming Offer Banner */}
+      {/* Incoming Offer Banner with 30s Timeout Bar */}
       {activeOffer && (
-        <div className="mb-6 border-2 border-[#245A43] bg-white rounded-lg p-6 shadow-md animate-pulse">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-xs font-bold uppercase tracking-wider text-[#245A43]">
+        <div className="mb-6 border-2 border-[#245A43] bg-white rounded-lg p-6 shadow-md">
+          <div className="flex items-center justify-between mb-3">
+            <span className="text-xs font-bold uppercase tracking-wider text-[#245A43] flex items-center gap-1.5">
+              <span className="w-2.5 h-2.5 rounded-full bg-[#245A43] animate-ping"></span>
               ★ New Dispatch Offer Received
             </span>
-            <span className="text-xs font-bold bg-[#D6EE74] text-[#18231D] px-2 py-0.5 rounded">
-              High Go-Fair Match
-            </span>
+            <div className="flex items-center gap-2">
+              <span className={`text-xs font-mono font-bold px-2 py-0.5 rounded border ${
+                offerCountdown <= 5
+                  ? "bg-red-100 text-red-700 border-red-300 animate-pulse"
+                  : offerCountdown <= 15
+                  ? "bg-amber-100 text-amber-800 border-amber-300"
+                  : "bg-[#EAF2ED] text-[#245A43] border-[#245A43]/30"
+              }`}>
+                ⏱️ {offerCountdown}s to respond
+              </span>
+              <span className="text-xs font-bold bg-[#D6EE74] text-[#18231D] px-2 py-0.5 rounded">
+                Go-Fair Match
+              </span>
+            </div>
+          </div>
+
+          {/* 30s Visual Progress Bar */}
+          <div className="w-full bg-gray-100 h-1.5 rounded-full overflow-hidden mb-4">
+            <div
+              className={`h-full transition-all duration-1000 ${
+                offerCountdown <= 5
+                  ? "bg-red-500"
+                  : offerCountdown <= 15
+                  ? "bg-amber-500"
+                  : "bg-[#245A43]"
+              }`}
+              style={{ width: `${(offerCountdown / 30) * 100}%` }}
+            ></div>
           </div>
 
           <h2 className="text-xl font-bold text-[#18231D] mb-1">
@@ -281,11 +344,14 @@ export default function DriverWorkspace() {
             <button
               onClick={() => handleRespond(activeOffer.id, "accept")}
               disabled={actionLoading}
-              className="py-3 px-4 bg-[#245A43] text-white rounded font-bold text-sm hover:bg-[#1b4332] transition-colors disabled:opacity-50"
+              className="py-3 px-4 bg-[#245A43] text-white rounded font-bold text-sm hover:bg-[#1b4332] transition-colors disabled:opacity-50 shadow-sm"
             >
               Accept Ride
             </button>
           </div>
+          <span className="block text-[11px] text-[#68746C] text-center mt-3">
+            PS2 Guardrail: Automatic reassignment occurs after 30 seconds of inactivity to protect rider wait times.
+          </span>
         </div>
       )}
 

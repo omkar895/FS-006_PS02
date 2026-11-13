@@ -95,6 +95,17 @@ export default function MatchExplanationCard({
             )}
           </div>
 
+          {/* Official PS2 Scoring Equation Box */}
+          <div className="p-2.5 bg-[#FAF9F5] border border-[#D6DCD2] rounded text-[11px] text-[#35423A]">
+            <span className="font-bold text-[#18231D] block mb-1">PS2 Multi-Factor Scoring Equation:</span>
+            <code className="block bg-white p-1.5 rounded border border-[#D6DCD2] font-mono text-[10px] text-[#245A43] overflow-x-auto">
+              Score = 0.30·S_ETA + 0.25·S_Idle + 0.20·S_Dist + 0.15·S_Workload + 0.10·S_Reliability
+            </code>
+            <span className="text-[10px] text-[#68746C] mt-1 block">
+              Each component normalized strictly to [0.0, 1.0] across eligible candidates within 15m ETA ceiling.
+            </span>
+          </div>
+
           {/* 5-Factor Score Contribution Bars */}
           <div className="space-y-2">
             <span className="font-semibold text-[#18231D] block text-[11px]">
