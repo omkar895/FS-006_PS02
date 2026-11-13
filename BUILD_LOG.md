@@ -29,29 +29,41 @@
 ---
 
 ## Phase 04 — Intelligent Allocation, Fairness Scoring and Explanation (COMPLETED)
+- **Fairness Dispatch Engine:** 5-factor normalized quality scoring (ETA 0.30, Idle 0.25, Distance 0.20, Workload 0.15, Reliability 0.10).
+- **Inspection & Invariants:** Eligibility pre-filtering, nearest-eligible baseline comparison, and explanation metadata.
+- **Verification:** 29/29 tests passed across 9 test suites.
 
-### 1. Fairness Dispatch Engine (`lib/algorithms/dispatch-matching.ts`)
-- **Eligibility Guardrails:** Pre-filters drivers strictly by availability (`available`), absence of existing active rides, coordinate freshness threshold (15 mins), and maximum pickup ETA threshold (15 mins).
-- **Normalized 5-Factor Scoring Scale:**
-  $$\text{FairRide Score} = 0.30 \times \text{ETA} + 0.25 \times \text{Idle Time} + 0.20 \times \text{Distance} + 0.15 \times \text{Workload} + 0.10 \times \text{Reliability}$$
-  - **Pickup ETA (0.30):** Normalized against `maxPickupEtaMinutes`.
-  - **Idle Time (0.25):** Normalized against `idleSaturationMinutes` (60 mins cap).
-  - **Distance (0.20):** Straight-line Haversine quality.
-  - **Workload Balancing (0.15):** Inverse penalty on trips completed today to prevent driver burnout.
-  - **Acceptance Reliability (0.10):** Laplace smoothed ratio $\frac{\text{accepted} + 2}{\text{offered} + 4}$.
-- **Deterministic Tie-Breaking:** Highest score $\rightarrow$ lowest ETA $\rightarrow$ highest idle time $\rightarrow$ alphanumeric `userId`.
-- **Baseline Generator:** Produces exact-same-snapshot nearest-eligible-driver baseline for comparison.
-- **Truthful Explanation Generator:** Stores real factor contributions and human-readable explanation in `rides.match_metadata`.
+---
 
-### 2. Integration & Endpoints
-- **Service Layer (`lib/services/ride-service.ts`):** Integrated `executeDispatchMatching()` directly into passenger ride creation.
-- **Dispatch Inspection API (`app/api/dispatch/route.ts`):** `GET /api/dispatch?lat=&lng=&maxPickupEtaMinutes=` returns full candidate ranking, scores, contributions, and baseline comparison.
+## Phase 05 — Trained Demand Model and Zone Intelligence (COMPLETED)
+
+### 1. Synthetic Data & Python Training Pipeline
+- **History Generator (`scripts/generate-demand-history.py`):**
+  - Synthesizes 90 days of reproducible demand in 15-minute intervals across 6 zones (51,816 total rows).
+  - Target: Exact demand at $t+30$ minutes (two 15-minute intervals forward).
+  - Features at prediction time $t$: `zone_code`, `hour`, `quarter`, `day_of_week`, `is_weekend`, `lag_1`, `lag_2`, and `rolling_mean_4`.
+- **Model Training (`scripts/train-demand-model.py`):**
+  - **Algorithm:** `HistGradientBoostingRegressor` (scikit-learn).
+  - **Chronological Split:** 70% Train (36,270 rows) / 15% Validation / 15% Chronological Holdout Test (7,776 rows).
+  - **Actual Evaluation Metrics:**
+    - Gradient Boosting Model: **MAE = 2.2470**, **RMSE = 3.0008**.
+    - Historical Zone/Time Baseline: **MAE = 3.3189**, **RMSE = 4.2823**.
+    - Performance: Gradient Boosting beats the historical baseline by **1.072 MAE** on unseen future intervals.
+- **Versioned Artifact:** [data/generated/zone-demand-forecast.json](file:///c:/Users/omkar/OneDrive/Desktop/hackvally/data/generated/zone-demand-forecast.json) containing features, split boundaries, evaluation metrics, and forward 30-minute demand predictions.
+
+### 2. Zone Intelligence & Repositioning Service
+- **Service Layer (`lib/services/zone-intelligence.ts`):**
+  - Strictly validates forecast artifact against `DemandForecastArtifactSchema`.
+  - Calculates demand/supply pressure ratio $\frac{\text{predictedDemand}}{\text{availableSupply}}$.
+  - Computes bounded simulated surge multiplier ($1.00\times - 3.00\times$).
+  - Issues repositioning recommendations with deficit counts and human-readable operational reasons.
+- **API Endpoint (`app/api/zones/intelligence/route.ts`):** `GET /api/zones/intelligence` returns model metadata and current zone intelligence for operations monitoring.
 
 ### 3. Verification & Acceptance Evidence
 - **TypeScript Check:** `npm run typecheck` &rarr; PASS (`tsc --noEmit` exited 0).
 - **ESLint Check:** `npm run lint` &rarr; PASS (0 warnings, 0 errors).
-- **Unit & DOM Test Suite:** `npm test` &rarr; PASS (**29 / 29 tests passed across 9 test suites**).
-- **Production Build:** `npm run build` &rarr; PASS (Compiled dynamic `/api/dispatch` endpoint).
+- **Unit & DOM Test Suite:** `npm test` &rarr; PASS (**32 / 32 tests passed across 10 test suites**).
+- **Production Build:** `npm run build` &rarr; PASS (Next.js Turbopack compiled `/api/zones/intelligence`).
 
 ### 4. Next Step Recommendation
-Phase 04 is complete. Ready for **Phase 05 — Trained Demand Model and Zone Intelligence** (`prompts/05_DEMAND_MODEL_AND_ZONE_INTELLIGENCE.md`).
+Phase 05 is complete. Ready for **Phase 06 — Ride Pooling and Reassignment** (`prompts/06_POOLING_AND_REASSIGNMENT.md`).
