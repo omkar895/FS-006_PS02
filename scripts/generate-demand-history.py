@@ -86,3 +86,4 @@ if __name__ == "__main__":
     output_path = "data/generated/synthetic-demand-history.csv"
     df.to_csv(output_path, index=False)
     print(f"Dataset generated with {len(df)} records. Saved to: {output_path}")
+

@@ -38,3 +38,4 @@ describe("Phase 05 — Trained Demand Forecasting & Zone Intelligence", () => {
     expect(status.repositionRecommendation.reason).toContain("Forecast demand");
   });
 });
+

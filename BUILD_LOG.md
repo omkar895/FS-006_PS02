@@ -36,34 +36,44 @@
 ---
 
 ## Phase 05 — Trained Demand Model and Zone Intelligence (COMPLETED)
+- **Model Training:** `HistGradientBoostingRegressor` trained on 90 days of 15-min synthetic intervals across 6 zones.
+- **Metrics:** Model MAE 2.2470 vs. Historical Baseline MAE 3.3189 (beats baseline by 1.072 MAE on chronological holdout).
+- **Zone Intelligence:** Forward 30-min forecast demand, pressure ratio, bounded surge ($1.00\times - 3.00\times$), and repositioning recommendations.
+- **Verification:** 32/32 tests passed across 10 test suites.
 
-### 1. Synthetic Data & Python Training Pipeline
-- **History Generator (`scripts/generate-demand-history.py`):**
-  - Synthesizes 90 days of reproducible demand in 15-minute intervals across 6 zones (51,816 total rows).
-  - Target: Exact demand at $t+30$ minutes (two 15-minute intervals forward).
-  - Features at prediction time $t$: `zone_code`, `hour`, `quarter`, `day_of_week`, `is_weekend`, `lag_1`, `lag_2`, and `rolling_mean_4`.
-- **Model Training (`scripts/train-demand-model.py`):**
-  - **Algorithm:** `HistGradientBoostingRegressor` (scikit-learn).
-  - **Chronological Split:** 70% Train (36,270 rows) / 15% Validation / 15% Chronological Holdout Test (7,776 rows).
-  - **Actual Evaluation Metrics:**
-    - Gradient Boosting Model: **MAE = 2.2470**, **RMSE = 3.0008**.
-    - Historical Zone/Time Baseline: **MAE = 3.3189**, **RMSE = 4.2823**.
-    - Performance: Gradient Boosting beats the historical baseline by **1.072 MAE** on unseen future intervals.
-- **Versioned Artifact:** [data/generated/zone-demand-forecast.json](file:///c:/Users/omkar/OneDrive/Desktop/hackvally/data/generated/zone-demand-forecast.json) containing features, split boundaries, evaluation metrics, and forward 30-minute demand predictions.
+---
 
-### 2. Zone Intelligence & Repositioning Service
-- **Service Layer (`lib/services/zone-intelligence.ts`):**
-  - Strictly validates forecast artifact against `DemandForecastArtifactSchema`.
-  - Calculates demand/supply pressure ratio $\frac{\text{predictedDemand}}{\text{availableSupply}}$.
-  - Computes bounded simulated surge multiplier ($1.00\times - 3.00\times$).
-  - Issues repositioning recommendations with deficit counts and human-readable operational reasons.
-- **API Endpoint (`app/api/zones/intelligence/route.ts`):** `GET /api/zones/intelligence` returns model metadata and current zone intelligence for operations monitoring.
+## Phase 06 — Two-Passenger Ride Pooling and Reassignment (COMPLETED)
+
+### 1. Two-Passenger Ride Pooling Engine (`lib/algorithms/pooling.ts`)
+- **Compatibility Evaluation:**
+  - Pickup proximity limit: $< 3.0\text{ km}$ straight-line Haversine.
+  - Maximum detour ratio: $\le 1.35\times$ per passenger.
+  - Maximum added travel duration: $\le 10\text{ mins}$ per passenger.
+- **Feasible Sequence Permutations:**
+  - Evaluates all 4 valid pickup-before-dropoff permutations:
+    1. $P_A \rightarrow P_B \rightarrow D_A \rightarrow D_B$
+    2. $P_A \rightarrow P_B \rightarrow D_B \rightarrow D_A$
+    3. $P_B \rightarrow P_A \rightarrow D_B \rightarrow D_A$
+    4. $P_B \rightarrow P_A \rightarrow D_A \rightarrow D_B$
+  - Selects the sequence minimizing total travel distance and passenger detour.
+- **Shared Fare & Savings Transparency:**
+  - Compares separate direct fare vs. shared route fare (20% savings per passenger).
+- **Pooling Service & API:**
+  - [lib/services/pooling-service.ts](file:///c:/Users/omkar/OneDrive/Desktop/hackvally/lib/services/pooling-service.ts) and `GET /api/pooling/candidates`.
+
+### 2. Idempotent Automatic Reassignment Service (`lib/services/reassignment-service.ts`)
+- **Exception Triggers:** Rejection, Timeout/No-response, Driver Cancellation, and Delayed Arrival.
+- **Cycle-Specific Exclusions:** Prevents immediate re-offering to the previous driver.
+- **Audit Logging:** Every reassignment records previous assignment, reason, attempt count, and new candidate.
+- **Bounded Retry Guardrail:** Caps retries at 3 attempts; transitions to `unassigned` if no eligible candidates remain.
+- **API Endpoint:** `POST /api/dispatch/[id]/reassign`.
 
 ### 3. Verification & Acceptance Evidence
 - **TypeScript Check:** `npm run typecheck` &rarr; PASS (`tsc --noEmit` exited 0).
 - **ESLint Check:** `npm run lint` &rarr; PASS (0 warnings, 0 errors).
-- **Unit & DOM Test Suite:** `npm test` &rarr; PASS (**32 / 32 tests passed across 10 test suites**).
-- **Production Build:** `npm run build` &rarr; PASS (Next.js Turbopack compiled `/api/zones/intelligence`).
+- **Unit & DOM Test Suite:** `npm test` &rarr; PASS (**34 / 34 tests passed across 11 test suites**).
+- **Production Build:** `npm run build` &rarr; PASS (Next.js Turbopack compiled all routes).
 
 ### 4. Next Step Recommendation
-Phase 05 is complete. Ready for **Phase 06 — Ride Pooling and Reassignment** (`prompts/06_POOLING_AND_REASSIGNMENT.md`).
+Phase 06 is complete. Ready for **Phase 07 — Admin Control Center and Simulation Lab** (`prompts/07_ADMIN_CONTROL_CENTER_AND_SIMULATION.md`).
