@@ -248,6 +248,43 @@ export default function AdminControlCenter() {
         </div>
       </div>
 
+      {/* RTO / BBMP Regulatory Audit Bar */}
+      <div className="mb-6 bg-white border border-[#D6DCD2] rounded-xl p-4 shadow-xs flex flex-col md:flex-row items-start md:items-center justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <span className="text-2xl">🏛️</span>
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-bold text-[#18231D]">
+                Statutory Regulatory Oversight &amp; Audit Trail
+              </span>
+              <span className="text-[10px] bg-[#EAF2ED] text-[#245A43] font-bold px-2 py-0.5 rounded border border-[#245A43]/20">
+                Karnataka RTO / BBMP Ready
+              </span>
+            </div>
+            <p className="text-[11px] text-[#68746C] mt-0.5">
+              Tamper-proof event logs documenting algorithmic fare rationale, surge boundaries, and non-discriminatory driver selection.
+            </p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2 w-full md:w-auto justify-end">
+          <a
+            href="/api/audit/export?format=csv"
+            download="go-fair-rto-regulatory-audit.csv"
+            className="px-3 py-1.5 bg-[#F4F3ED] hover:bg-[#EAECE5] border border-[#D6DCD2] rounded text-xs font-semibold text-[#35423A] transition-colors flex items-center gap-1.5"
+          >
+            <span>📥 Export CSV</span>
+          </a>
+          <a
+            href="/api/audit/export?format=json"
+            download="go-fair-rto-regulatory-audit.json"
+            className="px-3 py-1.5 bg-[#245A43] hover:bg-[#1b4332] text-white rounded text-xs font-semibold transition-colors flex items-center gap-1.5 shadow-xs"
+          >
+            <span>📥 Export JSON</span>
+          </a>
+        </div>
+      </div>
+
       {activeTab === "operations" && (
         <div className="space-y-6">
           {/* Model Provenance Banner */}

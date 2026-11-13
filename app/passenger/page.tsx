@@ -10,6 +10,7 @@ import LifecycleSimulator from "@/components/dispatch/lifecycle-simulator";
 import PoolingCard from "@/components/dispatch/pooling-card";
 import LocationSearchInput from "@/components/maps/location-search-input";
 import { fetchRealRoadRoute } from "@/lib/services/routing-service";
+import { findNearestMetroStation } from "@/lib/utils/metro-stations";
 
 interface NearbyDriver {
   userId: string;
@@ -611,6 +612,29 @@ export default function PassengerWorkspace() {
                   PS2 ECO-CREDIT
                 </span>
               </div>
+
+              {/* Multi-Modal Hub Connection (PS2 Feature) */}
+              {(() => {
+                const metro = findNearestMetroStation(activeRide.pickup_lat, activeRide.pickup_lng);
+                return (
+                  <div className="mt-3 bg-[#FAF9F5] border border-[#D6DCD2] rounded-lg p-3 text-xs flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="text-base">🚆</span>
+                      <div>
+                        <span className="font-semibold text-[#18231D]">
+                          Multi-Modal Metro Link: ~{metro.transitMinutes} mins to {metro.station.name}
+                        </span>
+                        <span className="text-[11px] text-[#68746C] block">
+                          {metro.station.line} &bull; {metro.distanceKm} km first-mile connection
+                        </span>
+                      </div>
+                    </div>
+                    <span className="text-[10px] bg-purple-100 text-purple-900 font-bold px-2 py-0.5 rounded shrink-0 border border-purple-200">
+                      NAMMA METRO
+                    </span>
+                  </div>
+                );
+              })()}
 
               {/* Pitch Feature 2: Solo Presenter Lifecycle Simulator */}
               <LifecycleSimulator

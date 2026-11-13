@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
 import OperationsMap from "@/components/maps/map-wrapper";
 import { fetchRealRoadRoute } from "@/lib/services/routing-service";
+import { findNearestMetroStation } from "@/lib/utils/metro-stations";
 import Link from "next/link";
 
 interface PublicTripData {
@@ -369,6 +370,34 @@ export default function PublicTripTrackerPage() {
             </div>
           </div>
         </div>
+
+        {/* Multi-Modal Metro Hub Connection */}
+        {(() => {
+          const metro = findNearestMetroStation(trip.destination_lat, trip.destination_lng);
+          return (
+            <div className="bg-white p-4 rounded-xl border border-[#D6DCD2] text-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-xs">
+              <div className="flex items-center gap-3">
+                <span className="text-xl">🚆</span>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="font-bold text-[#18231D]">
+                      Multi-Modal Namma Metro Connection
+                    </span>
+                    <span className="text-[10px] bg-purple-100 text-purple-900 font-bold px-2 py-0.5 rounded border border-purple-200">
+                      {metro.station.line}
+                    </span>
+                  </div>
+                  <span className="text-[11px] text-[#68746C] block mt-0.5">
+                    Estimated ~{metro.transitMinutes} mins ({metro.distanceKm} km) transfer to {metro.station.name} from destination.
+                  </span>
+                </div>
+              </div>
+              <span className="text-[11px] font-semibold text-[#245A43] bg-[#EAF2ED] px-2.5 py-1 rounded border border-[#245A43]/20 shrink-0">
+                Seamless Urban Transit
+              </span>
+            </div>
+          );
+        })()}
 
         {/* Regulatory & Safety Footer */}
         <div className="bg-[#EAECE5] p-4 rounded-xl border border-[#D6DCD2] text-[11px] text-[#68746C] flex flex-col sm:flex-row items-center justify-between gap-2">
