@@ -13,7 +13,7 @@ const INITIAL_MESSAGES: Message[] = [
   {
     id: "welcome-1",
     role: "model",
-    text: "Namaskara! I am **FairRide AI Concierge**, your Bengaluru transit assistant powered by **Gemini 2.5 Flash**.\n\nYou can ask me about:\n- 🚗 **Cab vs 🏍️ Bike** fare comparisons and transit times\n- 👥 **Traveling member count** and pooling vehicle limits\n- 🌱 **Eco-Pool** shared rides and CO₂ savings\n- ⚖️ **PS2 Algorithmic Fairness** & dynamic reassignment\n\nHow can I help you travel today?",
+    text: "Namaskara! I am **Go-Fair AI**, your Bengaluru transit assistant powered by **Gemini 2.5 Flash**.\n\nYou can ask me about:\n- 🚗 **Cab vs 🏍️ Bike** fare comparisons and transit times\n- 👥 **Traveling member count** and pooling vehicle limits\n- 🌱 **Eco-Pool** shared rides and CO₂ savings\n- ⚖️ **PS2 Algorithmic Fairness** & dynamic reassignment\n\nHow can I help you travel today?",
     timestamp: "Just now",
   },
 ];
@@ -113,7 +113,7 @@ export function ChatbotWidget() {
         <button
           onClick={() => setIsOpen(true)}
           className="fixed bottom-6 right-6 z-[9990] flex items-center gap-2.5 px-4 py-3 bg-zinc-950 hover:bg-black text-white rounded-full shadow-[0_10px_35px_rgba(0,0,0,0.35)] border border-zinc-800 transition-all duration-300 hover:scale-105 cursor-pointer group"
-          aria-label="Open FairRide AI Chatbot"
+          aria-label="Open Go-Fair AI Chatbot"
         >
           <span className="relative flex h-3 w-3">
             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
@@ -121,7 +121,7 @@ export function ChatbotWidget() {
           </span>
           <span className="text-xs font-black tracking-wide flex items-center gap-1.5">
             <span>✨</span>
-            <span>Ask FairRide AI</span>
+            <span>Ask Go-Fair AI</span>
           </span>
           <span className="text-[10px] bg-emerald-950 text-emerald-300 border border-emerald-500/30 px-2 py-0.5 rounded-full font-bold">
             Gemini 2.5
@@ -141,7 +141,7 @@ export function ChatbotWidget() {
               <div>
                 <div className="flex items-center gap-2">
                   <h3 className="text-xs font-black uppercase tracking-wider text-white">
-                    FairRide AI Assistant
+                    Go-Fair AI Assistant
                   </h3>
                   <span className="text-[9px] bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 px-1.5 py-0.5 rounded-full font-bold">
                     Gemini Flash
@@ -237,3 +237,4 @@ export function ChatbotWidget() {
     </>
   );
 }
+

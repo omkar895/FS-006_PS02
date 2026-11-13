@@ -17,7 +17,7 @@ const ChatRequestSchema = z.object({
     .default([]),
 });
 
-const SYSTEM_INSTRUCTION = `You are the FairRide AI Concierge, a helpful, intelligent urban transit assistant for the Go-Fair AI ride-hailing and dynamic allocation system in Bengaluru.
+const SYSTEM_INSTRUCTION = `You are Go-Fair AI Concierge (or Go-Fair AI), a helpful, intelligent urban transit assistant for the Go-Fair AI ride-hailing and dynamic allocation system in Bengaluru.
 
 Key Platform Knowledge:
 1. Ride Choices:
@@ -94,7 +94,7 @@ export async function POST(req: NextRequest) {
       const errorDetail = data.error?.message || "Failed to generate AI response";
       // Graceful fallback response
       return apiSuccess({
-        reply: `Hello! I am your FairRide AI assistant. You can choose between **Cab** (up to 4 members) and **Bike** (1 rider, ₹25 base + ₹8/km). Let me know your pickup and destination in Bengaluru and I'll help you pick the best route! (${errorDetail})`,
+        reply: `Hello! I am your Go-Fair AI assistant. You can choose between **Cab** (up to 4 members) and **Bike** (1 rider, ₹25 base + ₹8/km). Let me know your pickup and destination in Bengaluru and I'll help you pick the best route! (${errorDetail})`,
       });
     }
 
@@ -108,3 +108,4 @@ export async function POST(req: NextRequest) {
     return apiError("AI_CHAT_ERROR", msg, 500);
   }
 }
+
