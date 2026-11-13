@@ -11,6 +11,8 @@ import PoolingCard from "@/components/dispatch/pooling-card";
 import LocationSearchInput from "@/components/maps/location-search-input";
 import { fetchRealRoadRoute } from "@/lib/services/routing-service";
 import { findNearestMetroStation } from "@/lib/utils/metro-stations";
+import { formatDuration } from "@/lib/utils/format";
+import { ReassignmentRadar } from "@/components/dispatch/reassignment-radar";
 
 interface NearbyDriver {
   userId: string;
@@ -314,6 +316,20 @@ export default function PassengerWorkspace() {
     }
   };
 
+  const handleCancelRide = async (rideId: string) => {
+    try {
+      await fetch(`/api/rides/${rideId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: "cancelled" }),
+      });
+      await fetchRides();
+      speakMilestone("Ride request cancelled.");
+    } catch {
+      // ignore
+    }
+  };
+
   const activeRide = rides.find((r) =>
     ["requested", "accepted", "arriving", "ongoing"].includes(r.status)
   );
@@ -514,7 +530,7 @@ export default function PassengerWorkspace() {
                 <div>
                   <span className="text-zinc-500 block text-[11px] font-medium">Calculated Route</span>
                   <span className="font-bold text-zinc-900">
-                    {effectiveDistanceKm} km {roadDurationMinutes ? `(~${roadDurationMinutes} mins)` : ""}
+                    {effectiveDistanceKm} km {roadDurationMinutes ? `(~${formatDuration(roadDurationMinutes)})` : ""}
                   </span>
                 </div>
                 {isRealRoad ? (
@@ -708,33 +724,68 @@ export default function PassengerWorkspace() {
                 </div>
               </div>
 
-              {/* Driver & Vehicle Identity Card */}
-              <div className="bg-zinc-50 border border-zinc-200/80 rounded-2xl p-4 flex items-center justify-between">
-                <div className="flex items-center gap-3.5">
-                  <div className="relative">
-                    <div className="w-12 h-12 rounded-full bg-zinc-900 text-white flex items-center justify-center font-bold text-sm shadow-sm">
-                      DA
-                    </div>
-                    <span className="absolute -bottom-1 -right-1 bg-amber-400 text-zinc-950 text-[10px] font-black px-1 rounded-full shadow-xs">
-                      ★ 4.9
-                    </span>
-                  </div>
-                  <div>
-                    <div className="text-xs font-bold text-zinc-900 flex items-center gap-1.5">
-                      <span>Driver Alpha</span>
-                      <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800 font-bold">
-                        Verified
+              {/* Driver Assignment Status / Identity / PS2 Reassignment Radar */}
+              {!activeRide.assigned_driver_id ? (
+                <ReassignmentRadar
+                  rideId={activeRide.id}
+                  status={activeRide.status}
+                  pickupLabel={activeRide.pickup_label}
+                  destinationLabel={activeRide.destination_label}
+                  distanceKm={activeRide.distance_km}
+                  initialEtaMinutes={activeRide.trip_eta_minutes}
+                  onReassigned={(newDriverId) => {
+                    setRides((prev) =>
+                      prev.map((r) =>
+                        r.id === activeRide.id
+                          ? {
+                              ...r,
+                              assigned_driver_id: newDriverId,
+                              status: "accepted",
+                              pickup_eta_minutes: 4,
+                            }
+                          : r
+                      )
+                    );
+                    setAssignedDriverCoords({
+                      lat: pickupLocation.lat + 0.005,
+                      lng: pickupLocation.lng + 0.005,
+                      label: "Dispatched Driver (En Route)",
+                      eta: 4,
+                    });
+                    speakMilestone("Dynamic reassignment successful! Driver matched and dispatched.");
+                    fetchRides();
+                  }}
+                  onCancel={() => handleCancelRide(activeRide.id)}
+                />
+              ) : (
+                /* Driver & Vehicle Identity Card */
+                <div className="bg-zinc-50 border border-zinc-200/80 rounded-2xl p-4 flex items-center justify-between">
+                  <div className="flex items-center gap-3.5">
+                    <div className="relative">
+                      <div className="w-12 h-12 rounded-full bg-zinc-900 text-white flex items-center justify-center font-bold text-sm shadow-sm">
+                        DA
+                      </div>
+                      <span className="absolute -bottom-1 -right-1 bg-amber-400 text-zinc-950 text-[10px] font-black px-1 rounded-full shadow-xs">
+                        ★ 4.9
                       </span>
                     </div>
-                    <span className="text-[11px] text-zinc-500 font-medium">Swift Dzire Prime (White)</span>
+                    <div>
+                      <div className="text-xs font-bold text-zinc-900 flex items-center gap-1.5">
+                        <span>Driver Alpha</span>
+                        <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800 font-bold">
+                          Verified
+                        </span>
+                      </div>
+                      <span className="text-[11px] text-zinc-500 font-medium">Swift Dzire Prime (White)</span>
+                    </div>
+                  </div>
+
+                  {/* Monospace License Plate Badge */}
+                  <div className="bg-white border-2 border-zinc-900 text-zinc-950 px-3 py-1 rounded-lg font-mono font-black text-xs tracking-wider shadow-xs">
+                    KA-01-EQ-4491
                   </div>
                 </div>
-
-                {/* Monospace License Plate Badge */}
-                <div className="bg-white border-2 border-zinc-900 text-zinc-950 px-3 py-1 rounded-lg font-mono font-black text-xs tracking-wider shadow-xs">
-                  KA-01-EQ-4491
-                </div>
-              </div>
+              )}
 
               {/* Trip Key Stats */}
               <div className="grid grid-cols-3 gap-3 py-3 border-y border-zinc-200 text-center">
@@ -748,7 +799,7 @@ export default function PassengerWorkspace() {
                 </div>
                 <div>
                   <span className="text-zinc-500 block text-[11px] font-medium">Indicative ETA</span>
-                  <span className="font-extrabold text-zinc-950 text-base">{activeRide.trip_eta_minutes || "--"} mins</span>
+                  <span className="font-extrabold text-zinc-950 text-base">{formatDuration(activeRide.trip_eta_minutes)}</span>
                 </div>
               </div>
 

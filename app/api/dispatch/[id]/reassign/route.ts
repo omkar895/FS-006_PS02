@@ -6,7 +6,16 @@ import { apiSuccess, apiError } from "@/lib/utils/api-response";
 export const runtime = "nodejs";
 
 const ReassignSchema = z.object({
-  reason: z.enum(["REJECTED", "TIMEOUT", "CANCELLED_BY_DRIVER", "DELAYED_ARRIVAL"]).default("REJECTED"),
+  reason: z
+    .enum([
+      "REJECTED",
+      "TIMEOUT",
+      "CANCELLED_BY_DRIVER",
+      "DELAYED_ARRIVAL",
+      "SEARCH_EXPANSION",
+      "UNASSIGNED_FALLBACK",
+    ])
+    .default("REJECTED"),
 });
 
 export async function POST(

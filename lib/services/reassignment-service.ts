@@ -19,7 +19,13 @@ export class ReassignmentService {
    */
   static async handleDriverException(
     rideId: string,
-    reason: "REJECTED" | "TIMEOUT" | "CANCELLED_BY_DRIVER" | "DELAYED_ARRIVAL"
+    reason:
+      | "REJECTED"
+      | "TIMEOUT"
+      | "CANCELLED_BY_DRIVER"
+      | "DELAYED_ARRIVAL"
+      | "SEARCH_EXPANSION"
+      | "UNASSIGNED_FALLBACK"
   ): Promise<ReassignmentResult> {
     const admin = createAdminClient();
 
@@ -41,7 +47,7 @@ export class ReassignmentService {
     // 2. Fetch past attempted drivers from append-only events
     const { data: events } = await admin
       .from("ride_events")
-      .select("actor_id, payload")
+      .select("actor_id, actor_role, payload")
       .eq("ride_id", rideId);
 
     const triedDriverIds = new Set<string>();
@@ -51,7 +57,7 @@ export class ReassignmentService {
 
     let attemptCount = 1;
     for (const ev of events || []) {
-      if (ev.actor_id) triedDriverIds.add(ev.actor_id);
+      if (ev.actor_role === "driver" && ev.actor_id) triedDriverIds.add(ev.actor_id);
       if (ev.payload?.triedDriverId) triedDriverIds.add(ev.payload.triedDriverId);
       if (ev.payload?.attemptCount) attemptCount = Math.max(attemptCount, ev.payload.attemptCount + 1);
     }
@@ -145,7 +151,34 @@ export class ReassignmentService {
       }
     );
 
-    const newCandidate = dispatchResult.selectedCandidate;
+    let newCandidate = dispatchResult.selectedCandidate;
+
+    // PS2 Dynamic Radius Expansion: If no candidate within strict 15-min ETA, expand search radius
+    if (!newCandidate && candidates.length > 0) {
+      const remainingCandidates = candidates.filter((c) => !triedDriverIds.has(c.userId));
+      if (remainingCandidates.length > 0) {
+        const expandedResult = executeDispatchMatching(
+          remainingCandidates,
+          ride.pickup_lat,
+          ride.pickup_lng,
+          undefined,
+          {
+            maxPickupEtaMinutes: 360,
+            maxLocationAgeMinutes: 120,
+            assumedSpeedKmh: 45,
+            pickupBufferMinutes: 3,
+            idleSaturationMinutes: 180,
+            excludedDriverIds: Array.from(triedDriverIds),
+          }
+        );
+        if (expandedResult.selectedCandidate) {
+          newCandidate = {
+            ...expandedResult.selectedCandidate,
+            explanation: `PS2 Dynamic Reassignment (Expanded Wave ${attemptCount}): Selected optimal driver across fleet.`,
+          };
+        }
+      }
+    }
 
     if (!newCandidate) {
       // No remaining eligible candidates

@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import { formatDuration } from "@/lib/utils/format";
 
 export interface ScoreContributions {
   eta?: number;
@@ -86,7 +87,7 @@ export default function MatchExplanationCard({
             <span className="font-bold block text-[#245A43] mb-1">Algorithmic Decision Rationale:</span>
             <p className="text-[#35423A] leading-relaxed">
               {metadata.explanation ||
-                `Driver was assigned based on the Go-Fair multi-factor optimization engine. Idle time and daily workload were weighed against proximity to prevent driver burnout while preserving an estimated pickup ETA of ~${pickupEtaMinutes || 4} mins.`}
+                `Driver was assigned based on the Go-Fair multi-factor optimization engine. Idle time and daily workload were weighed against proximity to prevent driver burnout while preserving an estimated pickup ETA of ~${pickupEtaMinutes ? formatDuration(pickupEtaMinutes) : "4 mins"}.`}
             </p>
             {metadata.baselineMatch && (
               <span className="block mt-1.5 text-[11px] text-[#68746C] italic">

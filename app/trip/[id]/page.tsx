@@ -5,6 +5,7 @@ import { useParams } from "next/navigation";
 import OperationsMap from "@/components/maps/map-wrapper";
 import { fetchRealRoadRoute } from "@/lib/services/routing-service";
 import { findNearestMetroStation } from "@/lib/utils/metro-stations";
+import { formatDuration } from "@/lib/utils/format";
 import Link from "next/link";
 
 interface PublicTripData {
@@ -18,6 +19,7 @@ interface PublicTripData {
   destination_lng: number;
   distance_km: number;
   fare_estimate: number;
+  trip_eta_minutes?: number;
   created_at: string;
   started_at?: string;
   completed_at?: string;
@@ -268,6 +270,15 @@ export default function PublicTripTrackerPage() {
             <h1 className="text-xl font-extrabold text-zinc-950">
               {trip.pickup_label} &rarr; {trip.destination_label}
             </h1>
+            <div className="flex flex-wrap items-center gap-3 mt-2 text-xs">
+              <span className="text-zinc-600 font-medium">Distance: <b className="text-zinc-950">{trip.distance_km} km</b></span>
+              <span className="text-zinc-300">&bull;</span>
+              <span className="text-zinc-600 font-medium">Fare: <b className="text-emerald-700">₹{trip.fare_estimate}</b></span>
+              <span className="text-zinc-300">&bull;</span>
+              <span className="text-zinc-600 font-medium">
+                Estimated Total Time: <b className="text-zinc-950">{formatDuration(trip.trip_eta_minutes || Math.round((trip.distance_km / 30) * 60))}</b>
+              </span>
+            </div>
           </div>
 
           <div className="flex items-center gap-3">
@@ -401,7 +412,7 @@ export default function PublicTripTrackerPage() {
                     </span>
                   </div>
                   <span className="text-[11px] text-[#68746C] block mt-0.5">
-                    Estimated ~{metro.transitMinutes} mins ({metro.distanceKm} km) transfer to {metro.station.name} from destination.
+                    Estimated ~{formatDuration(metro.transitMinutes)} ({metro.distanceKm} km) transfer to {metro.station.name} from destination.
                   </span>
                 </div>
               </div>
