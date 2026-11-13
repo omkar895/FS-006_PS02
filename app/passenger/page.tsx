@@ -3,11 +3,13 @@
 import React, { useState, useEffect } from "react";
 import { Ride } from "@/lib/schemas/database";
 import OperationsMap from "@/components/maps/map-wrapper";
-import { PRESET_LOCATIONS } from "@/lib/utils/demo-locations";
+import { PRESET_LOCATIONS, PresetLocation } from "@/lib/utils/demo-locations";
 import { createClient } from "@/lib/auth/client";
 import MatchExplanationCard from "@/components/dispatch/match-explanation-card";
 import LifecycleSimulator from "@/components/dispatch/lifecycle-simulator";
 import PoolingCard from "@/components/dispatch/pooling-card";
+import LocationSearchInput from "@/components/maps/location-search-input";
+import { fetchRealRoadRoute } from "@/lib/services/routing-service";
 
 interface NearbyDriver {
   userId: string;
@@ -26,18 +28,25 @@ export default function PassengerWorkspace() {
   const [error, setError] = useState<string | null>(null);
 
   // Selected locations
-  const [pickupLocation, setPickupLocation] = useState(PRESET_LOCATIONS[0]);
-  const [destLocation, setDestLocation] = useState(PRESET_LOCATIONS[1]);
+  const [pickupLocation, setPickupLocation] = useState<PresetLocation>(PRESET_LOCATIONS[0]);
+  const [destLocation, setDestLocation] = useState<PresetLocation>(PRESET_LOCATIONS[1]);
   const [isPooling, setIsPooling] = useState(false);
+  const [inputMode, setInputMode] = useState<"search" | "preset">("preset");
 
-  // Dynamic direct fare estimate
-  const currentDistanceKm = Number(
+  // Real road route state
+  const [routeCoordinates, setRouteCoordinates] = useState<[number, number][]>([]);
+  const [isRealRoad, setIsRealRoad] = useState(false);
+  const [roadDistanceKm, setRoadDistanceKm] = useState<number | null>(null);
+  const [roadDurationMinutes, setRoadDurationMinutes] = useState<number | null>(null);
+
+  // Dynamic fare estimate (prioritizing real road distance when available)
+  const effectiveDistanceKm = roadDistanceKm ?? Number(
     Math.hypot(
       (destLocation.lat - pickupLocation.lat) * 111,
       (destLocation.lng - pickupLocation.lng) * 85
     ).toFixed(2)
   );
-  const directFare = Math.max(50, Math.round(50 + currentDistanceKm * 15));
+  const directFare = Math.max(50, Math.round(50 + effectiveDistanceKm * 15));
 
   const fetchRides = async () => {
     setLoading(true);
@@ -85,6 +94,52 @@ export default function PassengerWorkspace() {
       ignore = true;
     };
   }, []);
+
+  // Sub-second Realtime WebSockets for Instant Status Updates
+  useEffect(() => {
+    try {
+      const supabase = createClient();
+      const channel = supabase
+        .channel("passenger-realtime-rides")
+        .on(
+          "postgres_changes",
+          { event: "*", schema: "public", table: "rides" },
+          () => {
+            fetchRides();
+          }
+        )
+        .subscribe();
+
+      return () => {
+        supabase.removeChannel(channel);
+      };
+    } catch {
+      // Fallback
+    }
+  }, []);
+
+  // Real-world OSRM driving road routing
+  useEffect(() => {
+    let ignore = false;
+    async function loadRoute() {
+      const route = await fetchRealRoadRoute(
+        pickupLocation.lat,
+        pickupLocation.lng,
+        destLocation.lat,
+        destLocation.lng
+      );
+      if (!ignore) {
+        setRouteCoordinates(route.coordinates);
+        setIsRealRoad(route.isRealRoad);
+        setRoadDistanceKm(route.distanceKm);
+        setRoadDurationMinutes(route.durationMinutes);
+      }
+    }
+    loadRoute();
+    return () => {
+      ignore = true;
+    };
+  }, [pickupLocation.lat, pickupLocation.lng, destLocation.lat, destLocation.lng]);
 
   useEffect(() => {
     let ignore = false;
@@ -179,55 +234,137 @@ export default function PassengerWorkspace() {
               </div>
             )}
 
-            <form onSubmit={handleBookRide} className="space-y-4 text-sm">
-              <div>
-                <label htmlFor="pickup-select" className="block text-xs font-medium text-[#35423A] mb-1">
-                  Pickup Location (Demo Presets)
-                </label>
-                <select
-                  id="pickup-select"
-                  aria-label="Pickup Location"
-                  value={pickupLocation.id}
-                  onChange={(e) => {
-                    const loc = PRESET_LOCATIONS.find((l) => l.id === e.target.value);
-                    if (loc) setPickupLocation(loc);
-                  }}
-                  className="w-full border border-[#D6DCD2] rounded px-3 py-2 text-xs focus:border-[#245A43] bg-white"
-                >
-                  {PRESET_LOCATIONS.map((loc) => (
-                    <option key={loc.id} value={loc.id}>
-                      {loc.name} ({loc.description})
-                    </option>
-                  ))}
-                </select>
-                <span className="text-[11px] text-[#68746C] mt-1 block">
-                  Coordinates: {pickupLocation.lat.toFixed(4)}, {pickupLocation.lng.toFixed(4)}
-                </span>
-              </div>
+            <div className="mb-4 flex items-center bg-[#F4F3ED] p-1 rounded border border-[#D6DCD2]">
+              <button
+                type="button"
+                onClick={() => setInputMode("search")}
+                className={`flex-1 text-xs py-1.5 font-medium rounded transition-colors ${
+                  inputMode === "search"
+                    ? "bg-white text-[#18231D] shadow-xs border border-[#D6DCD2]"
+                    : "text-[#68746C] hover:text-[#18231D]"
+                }`}
+              >
+                📍 Real OSM Search
+              </button>
+              <button
+                type="button"
+                onClick={() => setInputMode("preset")}
+                className={`flex-1 text-xs py-1.5 font-medium rounded transition-colors ${
+                  inputMode === "preset"
+                    ? "bg-white text-[#18231D] shadow-xs border border-[#D6DCD2]"
+                    : "text-[#68746C] hover:text-[#18231D]"
+                }`}
+              >
+                🏢 Preset Hubs
+              </button>
+            </div>
 
-              <div>
-                <label htmlFor="dest-select" className="block text-xs font-medium text-[#35423A] mb-1">
-                  Destination Location (Demo Presets)
-                </label>
-                <select
-                  id="dest-select"
-                  aria-label="Destination Location"
-                  value={destLocation.id}
-                  onChange={(e) => {
-                    const loc = PRESET_LOCATIONS.find((l) => l.id === e.target.value);
-                    if (loc) setDestLocation(loc);
-                  }}
-                  className="w-full border border-[#D6DCD2] rounded px-3 py-2 text-xs focus:border-[#245A43] bg-white"
-                >
-                  {PRESET_LOCATIONS.map((loc) => (
-                    <option key={loc.id} value={loc.id} disabled={loc.id === pickupLocation.id}>
-                      {loc.name} ({loc.description})
-                    </option>
-                  ))}
-                </select>
-                <span className="text-[11px] text-[#68746C] mt-1 block">
-                  Coordinates: {destLocation.lat.toFixed(4)}, {destLocation.lng.toFixed(4)}
-                </span>
+            <form onSubmit={handleBookRide} className="space-y-4 text-sm">
+              {inputMode === "search" ? (
+                <>
+                  <LocationSearchInput
+                    label="Pickup Location (Search Live Map)"
+                    placeholder="Search e.g. Indiranagar, MG Road, Airport..."
+                    currentName={pickupLocation.name}
+                    onSelectPlace={(place) =>
+                      setPickupLocation({
+                        id: `osm-${Date.now()}-pickup`,
+                        name: place.name,
+                        category: "commercial",
+                        lat: place.lat,
+                        lng: place.lng,
+                        description: "Real OSM Location",
+                      })
+                    }
+                  />
+
+                  <LocationSearchInput
+                    label="Destination Location (Search Live Map)"
+                    placeholder="Search e.g. Koramangala, Whitefield, HSR..."
+                    currentName={destLocation.name}
+                    onSelectPlace={(place) =>
+                      setDestLocation({
+                        id: `osm-${Date.now()}-dest`,
+                        name: place.name,
+                        category: "commercial",
+                        lat: place.lat,
+                        lng: place.lng,
+                        description: "Real OSM Location",
+                      })
+                    }
+                  />
+                </>
+              ) : (
+                <>
+                  <div>
+                    <label htmlFor="pickup-select" className="block text-xs font-medium text-[#35423A] mb-1">
+                      Pickup Location (Demo Presets)
+                    </label>
+                    <select
+                      id="pickup-select"
+                      aria-label="Pickup Location"
+                      value={pickupLocation.id}
+                      onChange={(e) => {
+                        const loc = PRESET_LOCATIONS.find((l) => l.id === e.target.value);
+                        if (loc) setPickupLocation(loc);
+                      }}
+                      className="w-full border border-[#D6DCD2] rounded px-3 py-2 text-xs focus:border-[#245A43] bg-white"
+                    >
+                      {PRESET_LOCATIONS.map((loc) => (
+                        <option key={loc.id} value={loc.id}>
+                          {loc.name} ({loc.description})
+                        </option>
+                      ))}
+                    </select>
+                    <span className="text-[11px] text-[#68746C] mt-1 block">
+                      Coordinates: {pickupLocation.lat.toFixed(4)}, {pickupLocation.lng.toFixed(4)}
+                    </span>
+                  </div>
+
+                  <div>
+                    <label htmlFor="dest-select" className="block text-xs font-medium text-[#35423A] mb-1">
+                      Destination Location (Demo Presets)
+                    </label>
+                    <select
+                      id="dest-select"
+                      aria-label="Destination Location"
+                      value={destLocation.id}
+                      onChange={(e) => {
+                        const loc = PRESET_LOCATIONS.find((l) => l.id === e.target.value);
+                        if (loc) setDestLocation(loc);
+                      }}
+                      className="w-full border border-[#D6DCD2] rounded px-3 py-2 text-xs focus:border-[#245A43] bg-white"
+                    >
+                      {PRESET_LOCATIONS.map((loc) => (
+                        <option key={loc.id} value={loc.id} disabled={loc.id === pickupLocation.id}>
+                          {loc.name} ({loc.description})
+                        </option>
+                      ))}
+                    </select>
+                    <span className="text-[11px] text-[#68746C] mt-1 block">
+                      Coordinates: {destLocation.lat.toFixed(4)}, {destLocation.lng.toFixed(4)}
+                    </span>
+                  </div>
+                </>
+              )}
+
+              {/* Real Road Route Metrics Pill */}
+              <div className="p-2.5 rounded bg-[#F4F3ED] border border-[#D6DCD2] flex items-center justify-between text-xs">
+                <div>
+                  <span className="text-[#68746C] block text-[11px]">Calculated Route</span>
+                  <span className="font-semibold text-[#18231D]">
+                    {effectiveDistanceKm} km {roadDurationMinutes ? `(~${roadDurationMinutes} mins)` : ""}
+                  </span>
+                </div>
+                {isRealRoad ? (
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-[#245A43] text-white">
+                    🛣️ OSRM Live Road
+                  </span>
+                ) : (
+                  <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-gray-200 text-gray-700">
+                    Straight Line
+                  </span>
+                )}
               </div>
 
               <PoolingCard
@@ -255,7 +392,12 @@ export default function PassengerWorkspace() {
           </div>
 
           <div className="mt-6 border-t border-[#D6DCD2] pt-4 text-xs text-[#68746C]">
-            <span className="font-semibold text-[#18231D]">Straight-line Estimate:</span> Distance calculated via Haversine. Indicative ETA assumes 30 km/h baseline without live traffic promises.
+            <span className="font-semibold text-[#18231D]">
+              {isRealRoad ? "OSRM Live Road Navigation:" : "Straight-line Estimate:"}
+            </span>{" "}
+            {isRealRoad
+              ? "Routing follows actual road geometry and turns using Open Source Routing Machine."
+              : "Distance calculated via Haversine. Indicative ETA assumes 30 km/h baseline without live traffic promises."}
           </div>
         </div>
 
@@ -273,6 +415,8 @@ export default function PassengerWorkspace() {
               lng: destLocation.lng,
               label: destLocation.name,
             }}
+            routeCoordinates={routeCoordinates}
+            isRealRoad={isRealRoad}
             drivers={nearbyDrivers.map((d) => ({
               id: d.userId,
               lat: d.lat,

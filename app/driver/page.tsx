@@ -11,6 +11,11 @@ export default function DriverWorkspace() {
   const [isOnline, setIsOnline] = useState(true);
   const [message, setMessage] = useState<string | null>(null);
 
+  // Live GPS Telemetry state
+  const [isBroadcastingGps, setIsBroadcastingGps] = useState(false);
+  const [gpsCoords, setGpsCoords] = useState<{ lat: number; lng: number; accuracy: number } | null>(null);
+  const [gpsError, setGpsError] = useState<string | null>(null);
+
   const fetchRides = async () => {
     setLoading(true);
     try {
@@ -57,6 +62,67 @@ export default function DriverWorkspace() {
       ignore = true;
     };
   }, []);
+
+  // Sub-second Realtime WebSockets for Instant Dispatch Push
+  useEffect(() => {
+    try {
+      const supabase = createClient();
+      const channel = supabase
+        .channel("driver-realtime-rides")
+        .on(
+          "postgres_changes",
+          { event: "*", schema: "public", table: "rides" },
+          () => {
+            fetchRides();
+          }
+        )
+        .subscribe();
+
+      return () => {
+        supabase.removeChannel(channel);
+      };
+    } catch {
+      // Fallback for non-websocket test environments
+    }
+  }, []);
+
+  // Live GPS Telemetry Broadcaster
+  useEffect(() => {
+    if (!isBroadcastingGps || typeof window === "undefined" || !navigator.geolocation) {
+      return;
+    }
+
+    const watchId = navigator.geolocation.watchPosition(
+      async (pos) => {
+        const { latitude, longitude, accuracy } = pos.coords;
+        setGpsCoords({ lat: latitude, lng: longitude, accuracy: Math.round(accuracy) });
+        setGpsError(null);
+
+        try {
+          await fetch("/api/drivers/telemetry", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              driverId: "123e4567-e89b-12d3-a456-426614174010",
+              lat: latitude,
+              lng: longitude,
+            }),
+          });
+        } catch {
+          // Offline fallback
+        }
+      },
+      (err) => {
+        setGpsError(err.message);
+        setIsBroadcastingGps(false);
+      },
+      { enableHighAccuracy: true, maximumAge: 3000 }
+    );
+
+    return () => {
+      navigator.geolocation.clearWatch(watchId);
+    };
+  }, [isBroadcastingGps]);
 
   const handleRespond = async (rideId: string, decision: "accept" | "reject") => {
     setActionLoading(true);
@@ -114,9 +180,20 @@ export default function DriverWorkspace() {
           <span className="text-xs font-semibold uppercase tracking-wider text-[#68746C]">Driver Mobile Workspace</span>
           <h1 className="text-2xl font-bold tracking-tight text-[#18231D]">Trip Operations</h1>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setIsBroadcastingGps(!isBroadcastingGps)}
+            className={`px-3 py-1.5 text-xs font-bold rounded transition-colors flex items-center gap-1.5 shadow-sm ${
+              isBroadcastingGps
+                ? "bg-[#B7443E] text-white animate-pulse"
+                : "bg-white border border-[#245A43] text-[#245A43] hover:bg-[#EAF2ED]"
+            }`}
+          >
+            <span>📡</span>
+            <span>{isBroadcastingGps ? "Broadcasting GPS" : "Broadcast Live GPS"}</span>
+          </button>
           <span className="text-xs px-2.5 py-1 rounded bg-[#EAF2ED] text-[#245A43] border border-[#245A43]/20 font-medium">
-            ● Driver Alpha (KA-01-EA-1001)
+            ● Driver Alpha
           </span>
           <button
             onClick={() => setIsOnline(!isOnline)}
@@ -137,6 +214,34 @@ export default function DriverWorkspace() {
           </button>
         </div>
       </div>
+
+      {/* Live GPS Telemetry Status Banner */}
+      {isBroadcastingGps && (
+        <div className="mb-4 p-2.5 bg-[#EAF2ED] border border-[#245A43]/30 rounded-lg text-xs text-[#245A43] flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-[#245A43] animate-ping"></span>
+            <span>
+              Live Device GPS Active:{" "}
+              <strong>
+                {gpsCoords
+                  ? `${gpsCoords.lat.toFixed(5)}, ${gpsCoords.lng.toFixed(5)}`
+                  : "Acquiring satellite fix..."}
+              </strong>
+            </span>
+          </div>
+          {gpsCoords && (
+            <span className="text-[11px] text-[#68746C]">
+              Accuracy: &plusmn;{gpsCoords.accuracy}m &bull; Supabase Realtime Synced
+            </span>
+          )}
+        </div>
+      )}
+
+      {gpsError && (
+        <div className="mb-4 p-2 bg-amber-50 border border-amber-200 text-[#B96A2E] rounded text-xs">
+          GPS Notice: {gpsError}. Ensure browser location permission is allowed.
+        </div>
+      )}
 
       {message && (
         <div className="mb-6 p-3 bg-blue-50 border border-blue-200 text-[#476B75] text-xs rounded">

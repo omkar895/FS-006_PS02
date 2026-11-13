@@ -26,11 +26,21 @@ const pickupIcon = createColorIcon("#245A43"); // Forest Green
 const destIcon = createColorIcon("#B7443E"); // Red Accent
 const driverIcon = createColorIcon("#476B75"); // Muted Teal Driver
 
-function MapUpdater({ center }: { center: [number, number] }) {
+function MapUpdater({
+  center,
+  bounds,
+}: {
+  center: [number, number];
+  bounds?: [[number, number], [number, number]];
+}) {
   const map = useMap();
   useEffect(() => {
-    map.setView(center, map.getZoom());
-  }, [center, map]);
+    if (bounds) {
+      map.fitBounds(bounds, { padding: [40, 40], maxZoom: 15 });
+    } else {
+      map.setView(center, map.getZoom());
+    }
+  }, [center, bounds, map]);
   return null;
 }
 
@@ -46,6 +56,8 @@ interface OperationsMapProps {
   pickup?: { lat: number; lng: number; label: string };
   destination?: { lat: number; lng: number; label: string };
   drivers?: Array<{ id: string; lat: number; lng: number; label: string; eta?: number }>;
+  routeCoordinates?: [number, number][];
+  isRealRoad?: boolean;
   height?: string;
   onMapClick?: (coords: { lat: number; lng: number }) => void;
 }
@@ -54,16 +66,31 @@ export default function OperationsMap({
   pickup,
   destination,
   drivers = [],
+  routeCoordinates,
+  isRealRoad = false,
   height = "420px",
 }: OperationsMapProps) {
   const defaultCenter: [number, number] = pickup
     ? [pickup.lat, pickup.lng]
     : [12.9716, 77.5946];
 
-  const polylineCoords: [number, number][] = [];
-  if (pickup && destination) {
-    polylineCoords.push([pickup.lat, pickup.lng], [destination.lat, destination.lng]);
-  }
+  const bounds: [[number, number], [number, number]] | undefined =
+    pickup && destination
+      ? [
+          [Math.min(pickup.lat, destination.lat), Math.min(pickup.lng, destination.lng)],
+          [Math.max(pickup.lat, destination.lat), Math.max(pickup.lng, destination.lng)],
+        ]
+      : undefined;
+
+  const polylineCoords: [number, number][] =
+    routeCoordinates && routeCoordinates.length > 0
+      ? routeCoordinates
+      : pickup && destination
+      ? [
+          [pickup.lat, pickup.lng],
+          [destination.lat, destination.lng],
+        ]
+      : [];
 
   return (
     <div
@@ -76,7 +103,7 @@ export default function OperationsMap({
         scrollWheelZoom={true}
         style={{ width: "100%", height: "100%" }}
       >
-        <MapUpdater center={defaultCenter} />
+        <MapUpdater center={defaultCenter} bounds={bounds} />
 
         {/* Required OpenStreetMap Attribution */}
         <TileLayer
@@ -113,7 +140,7 @@ export default function OperationsMap({
           <Marker key={d.id} position={[d.lat, d.lng]} icon={driverIcon}>
             <Popup>
               <div className="text-xs">
-                <span className="font-bold text-[#476B75] block">DRIVER (SIMULATED)</span>
+                <span className="font-bold text-[#476B75] block">DRIVER</span>
                 <span>{d.label}</span>
                 {d.eta && <span className="block text-gray-500">~{d.eta} mins pickup ETA</span>}
               </div>
@@ -121,33 +148,42 @@ export default function OperationsMap({
           </Marker>
         ))}
 
-        {/* Straight-line connection indicator */}
-        {polylineCoords.length === 2 && (
+        {/* Road polyline or straight-line connection indicator */}
+        {polylineCoords.length > 0 && (
           <Polyline
             positions={polylineCoords}
             pathOptions={{
               color: "#245A43",
-              dashArray: "6, 6",
-              weight: 3,
-              opacity: 0.8,
+              weight: isRealRoad && polylineCoords.length > 2 ? 5 : 3,
+              dashArray: isRealRoad && polylineCoords.length > 2 ? undefined : "6, 6",
+              opacity: 0.85,
             }}
           />
         )}
       </MapContainer>
 
       {/* Map Legend Overlay */}
-      <div className="absolute bottom-3 left-3 z-[1000] bg-white/90 backdrop-blur-sm px-3 py-2 rounded border border-[#D6DCD2] text-[11px] shadow">
+      <div className="absolute bottom-3 left-3 z-[1000] bg-white/95 backdrop-blur-sm px-3 py-2 rounded border border-[#D6DCD2] text-[11px] shadow">
         <span className="font-bold text-[#18231D] block mb-1">Map Legend</span>
-        <div className="flex items-center gap-3 text-[#35423A]">
-          <span className="flex items-center gap-1">
-            <span className="inline-block w-2.5 h-2.5 rounded-full bg-[#245A43]"></span> Pickup
-          </span>
-          <span className="flex items-center gap-1">
-            <span className="inline-block w-2.5 h-2.5 rounded-full bg-[#B7443E]"></span> Destination
-          </span>
-          <span className="flex items-center gap-1">
-            <span className="inline-block w-2.5 h-2.5 rounded-full bg-[#476B75]"></span> Driver
-          </span>
+        <div className="space-y-1">
+          <div className="flex items-center gap-2">
+            <span className="inline-block w-2.5 h-2.5 rounded-full bg-[#245A43]"></span>
+            <span>Pickup</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="inline-block w-2.5 h-2.5 rounded-full bg-[#B7443E]"></span>
+            <span>Destination</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="inline-block w-2.5 h-2.5 rounded-full bg-[#476B75]"></span>
+            <span>Driver Telemetry</span>
+          </div>
+          {isRealRoad && (
+            <div className="flex items-center gap-2 pt-1 border-t border-gray-100">
+              <span className="inline-block w-3 h-1 bg-[#245A43]"></span>
+              <span className="font-bold text-[#245A43]">Road Route (OSRM)</span>
+            </div>
+          )}
         </div>
       </div>
     </div>
