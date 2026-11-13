@@ -27,6 +27,10 @@ export default function RootLayout({
               <span className="w-1.5 h-1.5 rounded-full bg-[#245A43] animate-pulse"></span>
               <span>Bengaluru Fleet Grid</span>
             </div>
+            <div className="hidden md:flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#EAF2ED] border border-[#245A43]/20 text-[10px] text-[#245A43] font-bold">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#245A43] animate-ping"></span>
+              <span>Realtime WebSockets Active</span>
+            </div>
           </div>
           <nav className="flex items-center gap-3 md:gap-5 text-xs font-semibold text-[#35423A]">
             <Link href="/overview" className="hover:text-[#245A43] transition-colors py-1">Overview</Link>

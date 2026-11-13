@@ -39,6 +39,20 @@ export default function PassengerWorkspace() {
   const [roadDistanceKm, setRoadDistanceKm] = useState<number | null>(null);
   const [roadDurationMinutes, setRoadDurationMinutes] = useState<number | null>(null);
 
+  // Live Assigned Driver Realtime Moving Location
+  const [assignedDriverCoords, setAssignedDriverCoords] = useState<{
+    lat: number;
+    lng: number;
+    label: string;
+    eta?: number;
+  } | null>(null);
+
+  // Instant Realtime Notification Toast
+  const [realtimeToast, setRealtimeToast] = useState<{
+    message: string;
+    type: "info" | "success" | "warning";
+  } | null>(null);
+
   // Dynamic fare estimate (prioritizing real road distance when available)
   const effectiveDistanceKm = roadDistanceKm ?? Number(
     Math.hypot(
@@ -95,17 +109,60 @@ export default function PassengerWorkspace() {
     };
   }, []);
 
-  // Sub-second Realtime WebSockets for Instant Status Updates
+  // Sub-second Realtime WebSockets for Instant Status Updates & Driver Telemetry
   useEffect(() => {
     try {
       const supabase = createClient();
       const channel = supabase
-        .channel("passenger-realtime-rides")
+        .channel("passenger-realtime-sync")
         .on(
           "postgres_changes",
           { event: "*", schema: "public", table: "rides" },
-          () => {
+          (payload) => {
             fetchRides();
+            if (payload.eventType === "UPDATE" && payload.new) {
+              const newStatus = (payload.new as { status: string }).status;
+              if (newStatus === "accepted") {
+                setRealtimeToast({
+                  message: "🎉 Driver Accepted! Driver Alpha is en route to your pickup point.",
+                  type: "success",
+                });
+              } else if (newStatus === "arriving") {
+                setRealtimeToast({
+                  message: "🚖 Driver Arriving! Your driver has reached the pickup location.",
+                  type: "info",
+                });
+              } else if (newStatus === "ongoing") {
+                setRealtimeToast({
+                  message: "🛣️ Trip Underway! Live vehicle telemetry streaming on road.",
+                  type: "info",
+                });
+              } else if (newStatus === "completed") {
+                setRealtimeToast({
+                  message: "🏁 Trip Completed! Thank you for riding with Go-Fair.",
+                  type: "success",
+                });
+              }
+            }
+          }
+        )
+        .on(
+          "postgres_changes",
+          { event: "UPDATE", schema: "public", table: "driver_profiles" },
+          (payload) => {
+            const row = payload.new as {
+              user_id: string;
+              current_lat: number;
+              current_lng: number;
+              vehicle_label?: string;
+            };
+            if (row && row.current_lat && row.current_lng) {
+              setAssignedDriverCoords({
+                lat: row.current_lat,
+                lng: row.current_lng,
+                label: row.vehicle_label || "Active Driver",
+              });
+            }
           }
         )
         .subscribe();
@@ -403,6 +460,29 @@ export default function PassengerWorkspace() {
 
         {/* Map & Live Discovery Center */}
         <div className="lg:col-span-8 space-y-6">
+          {/* Live Realtime Event Toast Banner */}
+          {realtimeToast && (
+            <div
+              className={`p-3 rounded-lg text-xs font-semibold flex items-center justify-between border shadow-xs animate-in fade-in slide-in-from-top duration-300 ${
+                realtimeToast.type === "success"
+                  ? "bg-[#EAF2ED] text-[#245A43] border-[#245A43]/30"
+                  : "bg-blue-50 text-[#18231D] border-blue-200"
+              }`}
+            >
+              <div className="flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-[#245A43] animate-ping"></span>
+                <span>{realtimeToast.message}</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setRealtimeToast(null)}
+                className="text-xs opacity-60 hover:opacity-100"
+              >
+                &times;
+              </button>
+            </div>
+          )}
+
           {/* Operations Map */}
           <OperationsMap
             pickup={{
@@ -417,6 +497,7 @@ export default function PassengerWorkspace() {
             }}
             routeCoordinates={routeCoordinates}
             isRealRoad={isRealRoad}
+            activeDriver={activeRide ? assignedDriverCoords : null}
             drivers={nearbyDrivers.map((d) => ({
               id: d.userId,
               lat: d.lat,

@@ -26,6 +26,29 @@ const pickupIcon = createColorIcon("#245A43"); // Forest Green
 const destIcon = createColorIcon("#B7443E"); // Red Accent
 const driverIcon = createColorIcon("#476B75"); // Muted Teal Driver
 
+const createVehicleIcon = (symbol: string = "🚗") => {
+  return L.divIcon({
+    className: "custom-vehicle-marker",
+    html: `<div style="
+      background-color: #18231D;
+      color: white;
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      border: 2px solid #245A43;
+      box-shadow: 0 0 8px rgba(36,90,67,0.6);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+    ">${symbol}</div>`,
+    iconSize: [26, 26],
+    iconAnchor: [13, 13],
+  });
+};
+
+const activeVehicleIcon = createVehicleIcon("🚗");
+
 function MapUpdater({
   center,
   bounds,
@@ -56,6 +79,7 @@ interface OperationsMapProps {
   pickup?: { lat: number; lng: number; label: string };
   destination?: { lat: number; lng: number; label: string };
   drivers?: Array<{ id: string; lat: number; lng: number; label: string; eta?: number }>;
+  activeDriver?: { lat: number; lng: number; label: string; eta?: number } | null;
   routeCoordinates?: [number, number][];
   isRealRoad?: boolean;
   height?: string;
@@ -66,6 +90,7 @@ export default function OperationsMap({
   pickup,
   destination,
   drivers = [],
+  activeDriver,
   routeCoordinates,
   isRealRoad = false,
   height = "420px",
@@ -148,6 +173,23 @@ export default function OperationsMap({
           </Marker>
         ))}
 
+        {/* Real-time Moving Active Driver Vehicle Marker */}
+        {activeDriver && (
+          <Marker position={[activeDriver.lat, activeDriver.lng]} icon={activeVehicleIcon}>
+            <Popup>
+              <div className="text-xs">
+                <span className="font-bold text-[#245A43] block">🚗 LIVE ASSIGNED DRIVER</span>
+                <span>{activeDriver.label}</span>
+                {activeDriver.eta && (
+                  <span className="block text-gray-500 font-semibold mt-0.5">
+                    ~{activeDriver.eta} mins pickup ETA (Real-time GPS)
+                  </span>
+                )}
+              </div>
+            </Popup>
+          </Marker>
+        )}
+
         {/* Road polyline or straight-line connection indicator */}
         {polylineCoords.length > 0 && (
           <Polyline
@@ -178,6 +220,12 @@ export default function OperationsMap({
             <span className="inline-block w-2.5 h-2.5 rounded-full bg-[#476B75]"></span>
             <span>Driver Telemetry</span>
           </div>
+          {activeDriver && (
+            <div className="flex items-center gap-2">
+              <span className="inline-block text-xs">🚗</span>
+              <span className="font-bold text-[#245A43]">Live Assigned Car</span>
+            </div>
+          )}
           {isRealRoad && (
             <div className="flex items-center gap-2 pt-1 border-t border-gray-100">
               <span className="inline-block w-3 h-1 bg-[#245A43]"></span>

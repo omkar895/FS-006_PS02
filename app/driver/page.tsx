@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { Ride } from "@/lib/schemas/database";
 import { createClient } from "@/lib/auth/client";
+import { fetchRealRoadRoute } from "@/lib/services/routing-service";
 
 export default function DriverWorkspace() {
   const [rides, setRides] = useState<Ride[]>([]);
@@ -18,6 +19,11 @@ export default function DriverWorkspace() {
 
   // 30-Second Offer Expiry Countdown (PS2 Automatic Reassignment Guardrail)
   const [offerCountdown, setOfferCountdown] = useState<number>(30);
+
+  // Real-time Road Driving Simulator state
+  const [isSimulatingDrive, setIsSimulatingDrive] = useState(false);
+  const [simStep, setSimStep] = useState(0);
+  const [simRouteCoords, setSimRouteCoords] = useState<[number, number][]>([]);
 
   const fetchRides = async () => {
     setLoading(true);
@@ -210,6 +216,62 @@ export default function DriverWorkspace() {
     return () => clearInterval(timer);
   }, [activeOfferId]);
 
+  // Load real road coordinates when an ongoing ride is active
+  useEffect(() => {
+    let ignore = false;
+    async function loadRoadCoords() {
+      if (!ongoingRide) {
+        setSimRouteCoords([]);
+        setSimStep(0);
+        setIsSimulatingDrive(false);
+        return;
+      }
+
+      const res = await fetchRealRoadRoute(
+        ongoingRide.pickup_lat,
+        ongoingRide.pickup_lng,
+        ongoingRide.destination_lat,
+        ongoingRide.destination_lng
+      );
+      if (!ignore && res.coordinates.length > 0) {
+        setSimRouteCoords(res.coordinates);
+      }
+    }
+    loadRoadCoords();
+    return () => {
+      ignore = true;
+    };
+  }, [ongoingRide]);
+
+  // Step through coordinates every 1.2s and broadcast live telemetry
+  useEffect(() => {
+    if (!isSimulatingDrive || simRouteCoords.length === 0) return;
+
+    const timer = setInterval(() => {
+      setSimStep((prev) => {
+        const next = prev + 1;
+        if (next >= simRouteCoords.length) {
+          setIsSimulatingDrive(false);
+          setMessage("Live driving completed: Vehicle arrived at destination!");
+          return prev;
+        }
+        const [lat, lng] = simRouteCoords[next];
+        fetch("/api/drivers/telemetry", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            driverId: "123e4567-e89b-12d3-a456-426614174010",
+            lat,
+            lng,
+          }),
+        }).catch(() => {});
+        return next;
+      });
+    }, 1200);
+
+    return () => clearInterval(timer);
+  }, [isSimulatingDrive, simRouteCoords]);
+
   return (
     <div className="max-w-4xl mx-auto py-8 px-6">
       <div className="border-b border-[#D6DCD2] pb-4 mb-6 flex items-center justify-between">
@@ -374,6 +436,36 @@ export default function DriverWorkspace() {
               <span className="text-xs text-[#68746C] block">Dropoff Destination:</span>
               <span className="font-bold text-[#18231D] text-base">{ongoingRide.destination_label}</span>
             </div>
+          </div>
+
+          {/* Real-time Street Driving Simulator Control */}
+          <div className="mb-4 p-3 bg-[#FAF9F5] border border-[#D6DCD2] rounded-lg">
+            <div className="flex items-center justify-between mb-1.5">
+              <span className="text-xs font-bold text-[#18231D] flex items-center gap-1.5">
+                <span>🚗</span>
+                Live Street Driving Telemetry
+              </span>
+              {simRouteCoords.length > 0 && (
+                <span className="text-[11px] font-mono text-[#245A43] font-semibold">
+                  Step {simStep + 1} / {simRouteCoords.length}
+                </span>
+              )}
+            </div>
+            <p className="text-[11px] text-[#68746C] mb-3">
+              Broadcasts turn-by-turn road coordinates to Supabase Realtime every 1.2s so passengers watch the car gliding along streets live.
+            </p>
+            <button
+              type="button"
+              onClick={() => setIsSimulatingDrive(!isSimulatingDrive)}
+              disabled={simRouteCoords.length === 0}
+              className={`w-full py-2 px-3 rounded text-xs font-bold transition-colors ${
+                isSimulatingDrive
+                  ? "bg-[#B7443E] text-white hover:bg-red-700 animate-pulse"
+                  : "bg-[#245A43] text-white hover:bg-[#1b4332]"
+              } disabled:opacity-50`}
+            >
+              {isSimulatingDrive ? "⏸ Pause Simulated Driving" : "▶ Start Live Road Driving (Simulate Car on Real Streets)"}
+            </button>
           </div>
 
           <div className="border-t border-[#D6DCD2] pt-4">
