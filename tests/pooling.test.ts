@@ -74,3 +74,4 @@ describe("Phase 06 — Two-Passenger Pooling & Constraints", () => {
     expect(plan.rejectionReason).toContain("Pickups are");
   });
 });
+

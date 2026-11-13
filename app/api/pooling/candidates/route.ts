@@ -15,3 +15,4 @@ export async function GET() {
     return apiError("POOLING_DISCOVERY_FAILED", message, 500);
   }
 }
+

@@ -44,36 +44,37 @@
 ---
 
 ## Phase 06 — Two-Passenger Ride Pooling and Reassignment (COMPLETED)
+- **Pooling Engine:** 4 feasible sequence evaluations preserving pickup-before-dropoff with detour & duration limits.
+- **Reassignment Service:** Idempotent retry engine with tried-driver cycle exclusions and 3-attempt limit.
+- **Verification:** 34/34 tests passed across 11 test suites.
 
-### 1. Two-Passenger Ride Pooling Engine (`lib/algorithms/pooling.ts`)
-- **Compatibility Evaluation:**
-  - Pickup proximity limit: $< 3.0\text{ km}$ straight-line Haversine.
-  - Maximum detour ratio: $\le 1.35\times$ per passenger.
-  - Maximum added travel duration: $\le 10\text{ mins}$ per passenger.
-- **Feasible Sequence Permutations:**
-  - Evaluates all 4 valid pickup-before-dropoff permutations:
-    1. $P_A \rightarrow P_B \rightarrow D_A \rightarrow D_B$
-    2. $P_A \rightarrow P_B \rightarrow D_B \rightarrow D_A$
-    3. $P_B \rightarrow P_A \rightarrow D_B \rightarrow D_A$
-    4. $P_B \rightarrow P_A \rightarrow D_A \rightarrow D_B$
-  - Selects the sequence minimizing total travel distance and passenger detour.
-- **Shared Fare & Savings Transparency:**
-  - Compares separate direct fare vs. shared route fare (20% savings per passenger).
-- **Pooling Service & API:**
-  - [lib/services/pooling-service.ts](file:///c:/Users/omkar/OneDrive/Desktop/hackvally/lib/services/pooling-service.ts) and `GET /api/pooling/candidates`.
+---
 
-### 2. Idempotent Automatic Reassignment Service (`lib/services/reassignment-service.ts`)
-- **Exception Triggers:** Rejection, Timeout/No-response, Driver Cancellation, and Delayed Arrival.
-- **Cycle-Specific Exclusions:** Prevents immediate re-offering to the previous driver.
-- **Audit Logging:** Every reassignment records previous assignment, reason, attempt count, and new candidate.
-- **Bounded Retry Guardrail:** Caps retries at 3 attempts; transitions to `unassigned` if no eligible candidates remain.
-- **API Endpoint:** `POST /api/dispatch/[id]/reassign`.
+## Phase 07 — Admin Control Center and Simulation Lab (COMPLETED)
+
+### 1. Dispatch Simulation Lab Engine (`lib/algorithms/simulation-lab.ts`)
+- **Immutable Input Dataset:** Generates a deterministic scenario snapshot (requests & fleet coordinates) for fixed random seed.
+- **Side-by-Side Comparative Execution:**
+  - **Baseline:** Nearest Eligible Driver (greedy minimum pickup distance).
+  - **FairRide:** Fairness Multi-Factor Engine (workload balancing, idle time, ETA, distance, reliability).
+- **Genuine Output Metrics:**
+  - Assigned vs unassigned requests.
+  - Completion rate %.
+  - Average pickup ETA & distance.
+  - Driver workload standard deviation (inequality metric).
+  - Minimum and maximum trips per driver.
+  - Transparent trade-off assessment: Measures workload inequality reduction % alongside minor pickup ETA delta.
+- **API Endpoint:** `POST /api/simulation/runs` executes reproducible simulations on demand.
+
+### 2. Admin Operations Console (`app/admin/page.tsx`)
+- **Zone Intelligence View:** Displays forward 30-min forecast demand, available driver supply, pressure ratio, simulated surge, and repositioning recommendations.
+- **Simulation Lab Interface:** Interactive parameters (request count, fleet drivers, random seed, max ETA) with side-by-side results table.
 
 ### 3. Verification & Acceptance Evidence
 - **TypeScript Check:** `npm run typecheck` &rarr; PASS (`tsc --noEmit` exited 0).
 - **ESLint Check:** `npm run lint` &rarr; PASS (0 warnings, 0 errors).
-- **Unit & DOM Test Suite:** `npm test` &rarr; PASS (**34 / 34 tests passed across 11 test suites**).
-- **Production Build:** `npm run build` &rarr; PASS (Next.js Turbopack compiled all routes).
+- **Unit & DOM Test Suite:** `npm test` &rarr; PASS (**36 / 36 tests passed across 12 test suites**).
+- **Production Build:** `npm run build` &rarr; PASS (Next.js Turbopack compiled `/admin` and `/api/simulation/runs`).
 
 ### 4. Next Step Recommendation
-Phase 06 is complete. Ready for **Phase 07 — Admin Control Center and Simulation Lab** (`prompts/07_ADMIN_CONTROL_CENTER_AND_SIMULATION.md`).
+Phase 07 is complete. Ready for **Phase 08 — Integration, Accessibility and Design QA** (`prompts/08_INTEGRATION_TESTS_ACCESSIBILITY_POLISH.md`).
