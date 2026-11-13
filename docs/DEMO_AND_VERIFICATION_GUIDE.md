@@ -86,3 +86,4 @@ The application will be accessible at `http://localhost:3000`.
 3. **Multi-Passenger Ride Pooling:** Evaluates all 4 feasible pickup-before-dropoff route sequences for 2-passenger pools with $\le 1.35\times$ detour and $\le 10\text{m}$ added duration limits, offering 20% fare savings.
 4. **Fairness-Aware Allocation:** 5-factor normalized quality scoring (ETA 0.30, Idle 0.25, Distance 0.20, Workload 0.15, Reliability 0.10) with explainable reasoning.
 5. **Automatic Reassignment & Exceptions:** Idempotent 3-attempt bounded retry engine handling driver rejections, timeouts, and cancellations while excluding previously tried drivers.
+
