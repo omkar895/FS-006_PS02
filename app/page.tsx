@@ -21,12 +21,18 @@ export default function HomePage() {
               Book rides with real-time pickup/destination routing, inspect upfront fare estimates, see driver location, and track lifecycle states.
             </p>
           </div>
-          <div className="mt-6">
+          <div className="mt-6 flex flex-col gap-2">
             <Link
               href="/passenger"
               className="inline-block w-full text-center py-2 px-4 rounded bg-[#245A43] text-white font-medium hover:bg-[#1b4332] transition-colors"
             >
               Open Passenger View
+            </Link>
+            <Link
+              href="/login?role=passenger"
+              className="inline-block w-full text-center py-1.5 px-4 rounded border border-[#D6DCD2] text-xs font-semibold text-[#35423A] hover:bg-[#EAECE5] transition-colors"
+            >
+              Sign In as Passenger
             </Link>
           </div>
         </div>
@@ -39,12 +45,18 @@ export default function HomePage() {
               Toggle operational availability, receive fairness-scored dispatch offers, accept/reject rides, and update Arriving/Ongoing/Completed milestones.
             </p>
           </div>
-          <div className="mt-6">
+          <div className="mt-6 flex flex-col gap-2">
             <Link
               href="/driver"
               className="inline-block w-full text-center py-2 px-4 rounded bg-[#245A43] text-white font-medium hover:bg-[#1b4332] transition-colors"
             >
               Open Driver View
+            </Link>
+            <Link
+              href="/login?role=driver"
+              className="inline-block w-full text-center py-1.5 px-4 rounded border border-[#D6DCD2] text-xs font-semibold text-[#35423A] hover:bg-[#EAECE5] transition-colors"
+            >
+              Sign In as Driver
             </Link>
           </div>
         </div>
@@ -57,12 +69,18 @@ export default function HomePage() {
               Monitor fleet telemetry, 30-min predictive demand heatmaps, ride pool compatibility, and run the reproducible Dispatch Simulation Lab.
             </p>
           </div>
-          <div className="mt-6">
+          <div className="mt-6 flex flex-col gap-2">
             <Link
               href="/admin"
               className="inline-block w-full text-center py-2 px-4 rounded bg-[#245A43] text-white font-medium hover:bg-[#1b4332] transition-colors"
             >
               Open Admin Console
+            </Link>
+            <Link
+              href="/login?role=admin"
+              className="inline-block w-full text-center py-1.5 px-4 rounded border border-[#D6DCD2] text-xs font-semibold text-[#35423A] hover:bg-[#EAECE5] transition-colors"
+            >
+              Sign In as Admin
             </Link>
           </div>
         </div>

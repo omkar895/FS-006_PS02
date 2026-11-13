@@ -27,6 +27,12 @@ export default function RootLayout({
             <Link href="/passenger" className="hover:text-[#245A43] transition-colors">Passenger</Link>
             <Link href="/driver" className="hover:text-[#245A43] transition-colors">Driver</Link>
             <Link href="/admin" className="hover:text-[#245A43] transition-colors">Admin Console</Link>
+            <Link
+              href="/login"
+              className="px-2.5 py-1 text-xs font-semibold rounded bg-[#245A43] text-white hover:bg-[#1b4332] transition-colors"
+            >
+              Sign In
+            </Link>
           </nav>
         </header>
         <main>{children}</main>
