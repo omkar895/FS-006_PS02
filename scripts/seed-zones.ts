@@ -28,3 +28,4 @@ export async function seedZones() {
   }
   return data;
 }
+

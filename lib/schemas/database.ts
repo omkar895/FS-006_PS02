@@ -101,3 +101,4 @@ export const RideSchema = z.object({
   updated_at: z.string().datetime(),
 });
 export type Ride = z.infer<typeof RideSchema>;
+

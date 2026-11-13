@@ -355,3 +355,4 @@ CREATE POLICY "simulation_runs_admin" ON public.simulation_runs
 CREATE POLICY "simulation_results_admin" ON public.simulation_results
     FOR ALL TO authenticated
     USING (public.current_user_role() = 'admin');
+
