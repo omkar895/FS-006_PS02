@@ -52,3 +52,4 @@ export async function GET(req: NextRequest) {
     return apiError("DISCOVERY_FAILED", message, 500);
   }
 }
+

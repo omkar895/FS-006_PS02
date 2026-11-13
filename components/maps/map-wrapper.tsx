@@ -16,3 +16,4 @@ const OperationsMap = dynamic(
 );
 
 export default OperationsMap;
+
