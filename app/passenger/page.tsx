@@ -2,21 +2,28 @@
 
 import React, { useState, useEffect } from "react";
 import { Ride } from "@/lib/schemas/database";
+import OperationsMap from "@/components/maps/map-wrapper";
+import { PRESET_LOCATIONS } from "@/lib/utils/demo-locations";
+
+interface NearbyDriver {
+  userId: string;
+  vehicleLabel: string;
+  lat: number;
+  lng: number;
+  distanceKm: number;
+  estimatedPickupMinutes: number;
+}
 
 export default function PassengerWorkspace() {
   const [rides, setRides] = useState<Ride[]>([]);
+  const [nearbyDrivers, setNearbyDrivers] = useState<NearbyDriver[]>([]);
   const [loading, setLoading] = useState(false);
   const [bookingLoading, setBookingLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Form inputs
-  const [pickupLabel, setPickupLabel] = useState("Downtown Central Hub");
-  const [pickupLat, setPickupLat] = useState("12.9716");
-  const [pickupLng, setPickupLng] = useState("77.5946");
-
-  const [destLabel, setDestLabel] = useState("Tech Park East Campus");
-  const [destLat, setDestLat] = useState("12.9850");
-  const [destLng, setDestLng] = useState("77.6050");
+  // Selected locations
+  const [pickupLocation, setPickupLocation] = useState(PRESET_LOCATIONS[0]);
+  const [destLocation, setDestLocation] = useState(PRESET_LOCATIONS[1]);
 
   const fetchRides = async () => {
     setLoading(true);
@@ -27,7 +34,7 @@ export default function PassengerWorkspace() {
         setRides(json.data || []);
       }
     } catch {
-      // Stale or unauthenticated state
+      // Offline fallback
     } finally {
       setLoading(false);
     }
@@ -43,7 +50,7 @@ export default function PassengerWorkspace() {
           setRides(json.data || []);
         }
       } catch {
-        // Offline or unauthenticated
+        // Offline
       }
     }
     load();
@@ -51,6 +58,25 @@ export default function PassengerWorkspace() {
       ignore = true;
     };
   }, []);
+
+  useEffect(() => {
+    let ignore = false;
+    async function loadNearby() {
+      try {
+        const res = await fetch(`/api/drivers/nearby?lat=${pickupLocation.lat}&lng=${pickupLocation.lng}`);
+        if (res.ok && !ignore) {
+          const json = await res.json();
+          setNearbyDrivers(json.data || []);
+        }
+      } catch {
+        // Fallback
+      }
+    }
+    loadNearby();
+    return () => {
+      ignore = true;
+    };
+  }, [pickupLocation]);
 
   const handleBookRide = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -63,14 +89,14 @@ export default function PassengerWorkspace() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           pickup: {
-            label: pickupLabel,
-            lat: parseFloat(pickupLat),
-            lng: parseFloat(pickupLng),
+            label: pickupLocation.name,
+            lat: pickupLocation.lat,
+            lng: pickupLocation.lng,
           },
           destination: {
-            label: destLabel,
-            lat: parseFloat(destLat),
-            lng: parseFloat(destLng),
+            label: destLocation.name,
+            lat: destLocation.lat,
+            lng: destLocation.lng,
           },
           idempotencyKey: crypto.randomUUID(),
         }),
@@ -94,7 +120,7 @@ export default function PassengerWorkspace() {
   );
 
   return (
-    <div className="max-w-6xl mx-auto py-8 px-6">
+    <div className="max-w-7xl mx-auto py-8 px-6">
       <div className="border-b border-[#D6DCD2] pb-4 mb-6 flex items-center justify-between">
         <div>
           <span className="text-xs font-semibold uppercase tracking-wider text-[#68746C]">Passenger Portal</span>
@@ -111,102 +137,109 @@ export default function PassengerWorkspace() {
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
         {/* Booking Form Rail */}
-        <div className="lg:col-span-5 bg-white border border-[#D6DCD2] rounded-lg p-6 shadow-sm">
-          <h2 className="text-lg font-bold text-[#18231D] mb-4">Request a Ride</h2>
+        <div className="lg:col-span-4 bg-white border border-[#D6DCD2] rounded-lg p-6 shadow-sm flex flex-col justify-between">
+          <div>
+            <h2 className="text-lg font-bold text-[#18231D] mb-4">Request a Ride</h2>
 
-          {error && (
-            <div className="mb-4 p-3 bg-red-50 border border-red-200 text-[#B7443E] text-xs rounded">
-              {error}
-            </div>
-          )}
-
-          <form onSubmit={handleBookRide} className="space-y-4 text-sm">
-            <div>
-              <label htmlFor="pickup-loc" className="block text-xs font-medium text-[#35423A] mb-1">
-                Pickup Location Name
-              </label>
-              <input
-                id="pickup-loc"
-                type="text"
-                value={pickupLabel}
-                onChange={(e) => setPickupLabel(e.target.value)}
-                className="w-full border border-[#D6DCD2] rounded px-3 py-2 text-sm focus:border-[#245A43]"
-                required
-              />
-              <div className="grid grid-cols-2 gap-2 mt-1">
-                <input
-                  type="number"
-                  step="any"
-                  value={pickupLat}
-                  onChange={(e) => setPickupLat(e.target.value)}
-                  placeholder="Pickup Lat"
-                  className="border border-[#D6DCD2] rounded px-2 py-1 text-xs"
-                  required
-                />
-                <input
-                  type="number"
-                  step="any"
-                  value={pickupLng}
-                  onChange={(e) => setPickupLng(e.target.value)}
-                  placeholder="Pickup Lng"
-                  className="border border-[#D6DCD2] rounded px-2 py-1 text-xs"
-                  required
-                />
+            {error && (
+              <div className="mb-4 p-3 bg-red-50 border border-red-200 text-[#B7443E] text-xs rounded">
+                {error}
               </div>
-            </div>
+            )}
 
-            <div>
-              <label htmlFor="dest-loc" className="block text-xs font-medium text-[#35423A] mb-1">
-                Destination Location Name
-              </label>
-              <input
-                id="dest-loc"
-                type="text"
-                value={destLabel}
-                onChange={(e) => setDestLabel(e.target.value)}
-                className="w-full border border-[#D6DCD2] rounded px-3 py-2 text-sm focus:border-[#245A43]"
-                required
-              />
-              <div className="grid grid-cols-2 gap-2 mt-1">
-                <input
-                  type="number"
-                  step="any"
-                  value={destLat}
-                  onChange={(e) => setDestLat(e.target.value)}
-                  placeholder="Dest Lat"
-                  className="border border-[#D6DCD2] rounded px-2 py-1 text-xs"
-                  required
-                />
-                <input
-                  type="number"
-                  step="any"
-                  value={destLng}
-                  onChange={(e) => setDestLng(e.target.value)}
-                  placeholder="Dest Lng"
-                  className="border border-[#D6DCD2] rounded px-2 py-1 text-xs"
-                  required
-                />
+            <form onSubmit={handleBookRide} className="space-y-4 text-sm">
+              <div>
+                <label htmlFor="pickup-select" className="block text-xs font-medium text-[#35423A] mb-1">
+                  Pickup Location (Demo Presets)
+                </label>
+                <select
+                  id="pickup-select"
+                  aria-label="Pickup Location"
+                  value={pickupLocation.id}
+                  onChange={(e) => {
+                    const loc = PRESET_LOCATIONS.find((l) => l.id === e.target.value);
+                    if (loc) setPickupLocation(loc);
+                  }}
+                  className="w-full border border-[#D6DCD2] rounded px-3 py-2 text-xs focus:border-[#245A43] bg-white"
+                >
+                  {PRESET_LOCATIONS.map((loc) => (
+                    <option key={loc.id} value={loc.id}>
+                      {loc.name} ({loc.description})
+                    </option>
+                  ))}
+                </select>
+                <span className="text-[11px] text-[#68746C] mt-1 block">
+                  Coordinates: {pickupLocation.lat.toFixed(4)}, {pickupLocation.lng.toFixed(4)}
+                </span>
               </div>
-            </div>
 
-            <div className="pt-2">
-              <button
-                type="submit"
-                disabled={bookingLoading}
-                className="w-full bg-[#245A43] hover:bg-[#1b4332] text-white py-2.5 px-4 rounded font-medium text-sm transition-colors disabled:opacity-50"
-              >
-                {bookingLoading ? "Calculating & Dispatching..." : "Request Ride Now"}
-              </button>
-            </div>
-          </form>
+              <div>
+                <label htmlFor="dest-select" className="block text-xs font-medium text-[#35423A] mb-1">
+                  Destination Location (Demo Presets)
+                </label>
+                <select
+                  id="dest-select"
+                  aria-label="Destination Location"
+                  value={destLocation.id}
+                  onChange={(e) => {
+                    const loc = PRESET_LOCATIONS.find((l) => l.id === e.target.value);
+                    if (loc) setDestLocation(loc);
+                  }}
+                  className="w-full border border-[#D6DCD2] rounded px-3 py-2 text-xs focus:border-[#245A43] bg-white"
+                >
+                  {PRESET_LOCATIONS.map((loc) => (
+                    <option key={loc.id} value={loc.id} disabled={loc.id === pickupLocation.id}>
+                      {loc.name} ({loc.description})
+                    </option>
+                  ))}
+                </select>
+                <span className="text-[11px] text-[#68746C] mt-1 block">
+                  Coordinates: {destLocation.lat.toFixed(4)}, {destLocation.lng.toFixed(4)}
+                </span>
+              </div>
+
+              <div className="pt-2">
+                <button
+                  type="submit"
+                  disabled={bookingLoading}
+                  className="w-full bg-[#245A43] hover:bg-[#1b4332] text-white py-2.5 px-4 rounded font-medium text-sm transition-colors disabled:opacity-50"
+                >
+                  {bookingLoading ? "Calculating & Dispatching..." : "Request Ride Now"}
+                </button>
+              </div>
+            </form>
+          </div>
 
           <div className="mt-6 border-t border-[#D6DCD2] pt-4 text-xs text-[#68746C]">
-            <span className="font-semibold text-[#18231D]">Pricing Transparency:</span> Standard rate ₹50 base + ₹15/km. ETA calculated from assumed 30 km/h baseline.
+            <span className="font-semibold text-[#18231D]">Straight-line Estimate:</span> Distance calculated via Haversine. Indicative ETA assumes 30 km/h baseline without live traffic promises.
           </div>
         </div>
 
-        {/* Active Ride & History Rail */}
-        <div className="lg:col-span-7 space-y-6">
+        {/* Map & Live Discovery Center */}
+        <div className="lg:col-span-8 space-y-6">
+          {/* Operations Map */}
+          <OperationsMap
+            pickup={{
+              lat: pickupLocation.lat,
+              lng: pickupLocation.lng,
+              label: pickupLocation.name,
+            }}
+            destination={{
+              lat: destLocation.lat,
+              lng: destLocation.lng,
+              label: destLocation.name,
+            }}
+            drivers={nearbyDrivers.map((d) => ({
+              id: d.userId,
+              lat: d.lat,
+              lng: d.lng,
+              label: `${d.vehicleLabel} (${d.distanceKm} km)`,
+              eta: d.estimatedPickupMinutes,
+            }))}
+            height="380px"
+          />
+
+          {/* Active Ride or Live Nearby List */}
           {activeRide ? (
             <div className="border border-[#245A43] bg-white rounded-lg p-6 shadow-sm">
               <div className="flex items-center justify-between mb-4">
@@ -218,58 +251,66 @@ export default function PassengerWorkspace() {
                 </span>
               </div>
 
-              <div className="grid grid-cols-2 gap-4 text-sm mb-4">
+              <div className="grid grid-cols-3 gap-2 py-3 border-y border-[#D6DCD2] text-center text-xs">
                 <div>
-                  <span className="text-xs text-[#68746C] block">From:</span>
-                  <span className="font-medium text-[#18231D]">{activeRide.pickup_label}</span>
+                  <span className="text-[#68746C] block">Straight-line Distance</span>
+                  <span className="font-bold text-[#18231D] text-sm">{activeRide.distance_km} km</span>
                 </div>
                 <div>
-                  <span className="text-xs text-[#68746C] block">To:</span>
-                  <span className="font-medium text-[#18231D]">{activeRide.destination_label}</span>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-3 gap-2 py-3 border-y border-[#D6DCD2] text-center">
-                <div>
-                  <span className="text-xs text-[#68746C] block">Distance</span>
-                  <span className="font-bold text-[#18231D]">{activeRide.distance_km} km</span>
+                  <span className="text-[#68746C] block">Estimated Fare</span>
+                  <span className="font-bold text-[#245A43] text-sm">₹{activeRide.fare_estimate}</span>
                 </div>
                 <div>
-                  <span className="text-xs text-[#68746C] block">Fare Estimate</span>
-                  <span className="font-bold text-[#245A43]">₹{activeRide.fare_estimate}</span>
+                  <span className="text-[#68746C] block">Indicative ETA</span>
+                  <span className="font-bold text-[#18231D] text-sm">{activeRide.trip_eta_minutes || "--"} mins</span>
                 </div>
-                <div>
-                  <span className="text-xs text-[#68746C] block">Trip ETA</span>
-                  <span className="font-bold text-[#18231D]">{activeRide.trip_eta_minutes || "--"} mins</span>
-                </div>
-              </div>
-
-              <div className="mt-4 text-xs text-[#68746C]">
-                {activeRide.assigned_driver_id ? (
-                  <span>Assigned Driver ID: <code className="bg-[#EAECE5] px-1 py-0.5 rounded">{activeRide.assigned_driver_id}</code></span>
-                ) : (
-                  <span className="text-[#B96A2E]">Searching for nearest eligible driver...</span>
-                )}
               </div>
             </div>
           ) : (
-            <div className="border border-dashed border-[#D6DCD2] bg-white/60 rounded-lg p-8 text-center text-sm text-[#68746C]">
-              No active ride request. Submit the booking form to match with a driver.
+            <div className="bg-white border border-[#D6DCD2] rounded-lg p-5">
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-xs font-bold uppercase tracking-wider text-[#35423A]">
+                  Nearby Available Drivers Projection ({nearbyDrivers.length} Available)
+                </h3>
+                <span className="text-[11px] text-[#68746C] bg-[#EAECE5] px-2 py-0.5 rounded">
+                  SIMULATED TELEMETRY
+                </span>
+              </div>
+
+              {nearbyDrivers.length === 0 ? (
+                <p className="text-xs text-[#68746C]">No available drivers nearby within 15 mins radius.</p>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  {nearbyDrivers.slice(0, 4).map((d) => (
+                    <div key={d.userId} className="border border-[#D6DCD2] rounded p-2.5 text-xs flex justify-between items-center">
+                      <div>
+                        <span className="font-semibold text-[#18231D] block">{d.vehicleLabel}</span>
+                        <span className="text-[#68746C]">{d.distanceKm} km away</span>
+                      </div>
+                      <span className="font-bold text-[#245A43] bg-[#F4F3ED] px-2 py-1 rounded border border-[#D6DCD2]">
+                        ~{d.estimatedPickupMinutes}m pickup
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           )}
 
           {/* Ride History */}
-          <div className="bg-white border border-[#D6DCD2] rounded-lg p-6">
-            <h3 className="text-base font-bold text-[#18231D] mb-4">Recent Ride History</h3>
+          <div className="bg-white border border-[#D6DCD2] rounded-lg p-5">
+            <h3 className="text-xs font-bold uppercase tracking-wider text-[#35423A] mb-3">
+              Recent Ride History
+            </h3>
             {rides.length === 0 ? (
               <p className="text-xs text-[#68746C]">No ride history records found.</p>
             ) : (
               <div className="divide-y divide-[#D6DCD2]">
-                {rides.map((ride) => (
-                  <div key={ride.id} className="py-3 flex items-center justify-between text-xs">
+                {rides.slice(0, 3).map((ride) => (
+                  <div key={ride.id} className="py-2.5 flex items-center justify-between text-xs">
                     <div>
                       <div className="font-medium text-[#18231D]">{ride.pickup_label} &rarr; {ride.destination_label}</div>
-                      <div className="text-[#68746C] mt-0.5">
+                      <div className="text-[#68746C]">
                         {new Date(ride.requested_at).toLocaleTimeString()} &middot; {ride.distance_km} km &middot; ₹{ride.fare_estimate}
                       </div>
                     </div>

@@ -25,3 +25,4 @@ describe("Pricing & Distance Algorithm", () => {
     expect(excessiveSurge.fareEstimate).toBe(375.0);
   });
 });
+

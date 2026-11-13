@@ -41,3 +41,4 @@ describe("Ride State Machine Invariants & Lifecycle", () => {
     expect(isValidRideTransition("reassigning", "unassigned", "admin").valid).toBe(true);
   });
 });
+

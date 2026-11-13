@@ -14,34 +14,32 @@
 ---
 
 ## Phase 02 — Core Ride Lifecycle (COMPLETED)
+- **State Machine:** 9-stage finite state machine with strict role-based transitions and optimistic locks.
+- **Vertical Slice:** Passenger request, driver accept/reject, arriving, ongoing, and completed flows wired end-to-end.
+- **Verification:** 18/18 tests passed across 5 test suites.
 
-### 1. State Machine & Domain Algorithms
-- **Finite State Machine:** [lib/algorithms/state-machine.ts](file:///c:/Users/omkar/OneDrive/Desktop/hackvally/lib/algorithms/state-machine.ts) enforcing:
-  - Valid progression: `requested` &rarr; `accepted` &rarr; `arriving` &rarr; `ongoing` &rarr; `completed`.
-  - Allowed exceptions: Pre-pickup driver/passenger cancellation & reassigning.
-  - Terminal locks: `completed`, `cancelled`, `expired`, `unassigned` cannot be reopened.
-  - Strict role permission checks preventing passengers from mutating driver execution milestones.
-- **Pricing & Distance Estimation:** [lib/algorithms/pricing.ts](file:///c:/Users/omkar/OneDrive/Desktop/hackvally/lib/algorithms/pricing.ts) using Haversine formula and bounded surge ($1.00 - 3.00$).
+---
 
-### 2. Full-Stack End-to-End Implementation
-- **Service Layer:** [lib/services/ride-service.ts](file:///c:/Users/omkar/OneDrive/Desktop/hackvally/lib/services/ride-service.ts)
-  - `createRide()`: Validates coordinates, calculates distance/fare, discovers eligible driver, emits `RIDE_REQUESTED` event.
-  - `respondToOffer()`: Atomic state update with optimistic lock, toggles driver to `busy`, emits `RIDE_ACCEPTED`/`RIDE_REJECTED`.
-  - `updateStatus()`: Progresses `arriving` &rarr; `ongoing` &rarr; `completed`, sets completion timestamp and final fare, releases driver to `available`.
-- **API Route Handlers:**
-  - `POST /api/rides`: Authenticated passenger booking with Zod coordinate validation.
-  - `GET /api/rides`: Scoped query returning user's active and historical rides.
-  - `POST /api/rides/[id]/respond`: Assigned driver accept/decline action.
-  - `POST /api/rides/[id]/status`: Assigned driver Arriving/Ongoing/Completed transition endpoint.
-- **User Portals:**
-  - Passenger Portal: [app/passenger/page.tsx](file:///c:/Users/omkar/OneDrive/Desktop/hackvally/app/passenger/page.tsx) with booking rail, upfront estimate transparency, active status, and ride history.
-  - Driver Portal: [app/driver/page.tsx](file:///c:/Users/omkar/OneDrive/Desktop/hackvally/app/driver/page.tsx) with online/offline toggle, offer banner with payout/distance, step-by-step trip milestone progression buttons, and history.
+## Phase 03 — Maps, Location and Nearby Driver Discovery (COMPLETED)
 
-### 3. Verification & Test Evidence
+### 1. Leaflet & OpenStreetMap Integration
+- **Client Component Separation:** [components/maps/operations-map.tsx](file:///c:/Users/omkar/OneDrive/Desktop/hackvally/components/maps/operations-map.tsx) and dynamic wrapper [components/maps/map-wrapper.tsx](file:///c:/Users/omkar/OneDrive/Desktop/hackvally/components/maps/map-wrapper.tsx) prevents SSR hydration mismatches.
+- **OpenStreetMap Attribution:** Tile attribution strictly maintained (`© OpenStreetMap contributors`).
+- **Restrained Markers & Visual Language:** Color-coded pin indicators for Pickup (Forest Green), Destination (Red Accent), and Simulated Drivers (Muted Teal), plus dashed straight-line route indicator.
+- **Preset Demo Locations:** [lib/utils/demo-locations.ts](file:///c:/Users/omkar/OneDrive/Desktop/hackvally/lib/utils/demo-locations.ts) providing transit, commercial, and residential hubs for reproducible testing without reliance on rate-limited public geocoders.
+
+### 2. Driver Discovery & Stale Telemetry Filter
+- **Discovery Service:** [lib/services/driver-discovery.ts](file:///c:/Users/omkar/OneDrive/Desktop/hackvally/lib/services/driver-discovery.ts)
+  - Filters out `busy`, `offline`, and stale driver telemetry older than 15 minutes.
+  - Projects straight-line Haversine distance and indicative pickup ETA ($assumedSpeed = 30\text{ km/h} + 2\text{ min buffer}$).
+- **API Endpoint:** `GET /api/drivers/nearby?lat=&lng=` validates input coordinates and returns nearest eligible drivers sorted by distance.
+- **Accessible List Alternative:** Passenger workspace renders both the interactive map view and a responsive tabular card list of nearby drivers.
+
+### 3. Verification & Acceptance Evidence
 - **TypeScript Check:** `npm run typecheck` &rarr; PASS (`tsc --noEmit` exited 0).
 - **ESLint Check:** `npm run lint` &rarr; PASS (0 warnings, 0 errors).
-- **Unit Test Suite:** `npm test` &rarr; PASS (18/18 tests passed across 5 test suites).
-- **Production Build:** `npm run build` &rarr; PASS (Next.js Turbopack compiled all static and dynamic routes cleanly).
+- **Unit & Integration Tests:** `npm test` &rarr; PASS (19/19 tests passed across 6 test suites, including [tests/driver-discovery.test.ts](file:///c:/Users/omkar/OneDrive/Desktop/hackvally/tests/driver-discovery.test.ts)).
+- **Production Build:** `npm run build` &rarr; PASS (Clean compilation of dynamic `api/drivers/nearby` and client map bundle).
 
 ### 4. Next Step Recommendation
-Phase 02 is complete and verified. Ready for **Phase 03 — Map, Location and Driver Discovery** (`prompts/03_MAP_LOCATION_AND_DISCOVERY.md`).
+Phase 03 is complete. Ready for **Phase 04 — Fairness-Aware Dispatch and Explanations** (`prompts/04_MATCHING_FAIRNESS_AND_EXPLANATIONS.md`).
