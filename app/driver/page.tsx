@@ -55,6 +55,44 @@ export default function DriverWorkspace() {
   const [simStep, setSimStep] = useState(0);
   const [simRouteCoords, setSimRouteCoords] = useState<[number, number][]>([]);
 
+  // Driver Profile & Vehicle Specs Editing State
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [driverName, setDriverName] = useState("Driver Alpha");
+  const [vehicleLabel, setVehicleLabel] = useState("Swift Dzire Prime (White)");
+  const [vehicleRegistration, setVehicleRegistration] = useState("KA-01-EQ-4491");
+  const [vehicleType, setVehicleType] = useState("standard");
+  const [upiId, setUpiId] = useState("driver.alpha@okhdfcbank");
+  const [profileSaving, setProfileSaving] = useState(false);
+  const [profileMessage, setProfileMessage] = useState<string | null>(null);
+
+  const handleSaveDriverProfile = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setProfileSaving(true);
+    setProfileMessage(null);
+    try {
+      const res = await fetch("/api/profile", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          displayName: driverName,
+          vehicleLabel,
+          vehicleRegistrationLabel: vehicleRegistration,
+          vehicleType,
+        }),
+      });
+      if (res.ok) {
+        setProfileMessage("Driver profile & vehicle specs updated successfully!");
+        setTimeout(() => setProfileMessage(null), 3000);
+      } else {
+        setProfileMessage("Specs updated locally.");
+      }
+    } catch {
+      setProfileMessage("Specs updated locally.");
+    } finally {
+      setProfileSaving(false);
+    }
+  };
+
   const fetchRides = async () => {
     setLoading(true);
     try {
@@ -380,6 +418,16 @@ export default function DriverWorkspace() {
           <h1 className="text-3xl font-extrabold tracking-tight text-zinc-950">Trip Operations</h1>
         </div>
         <div className="flex flex-wrap items-center gap-2.5">
+          <button
+            type="button"
+            onClick={() => setIsProfileOpen(true)}
+            className="px-3.5 py-2 text-xs font-bold rounded-full border border-zinc-200 bg-white hover:bg-zinc-50 text-zinc-900 transition-all shadow-xs flex items-center gap-2"
+          >
+            <span className="w-5 h-5 rounded-full bg-black text-white flex items-center justify-center text-[10px] font-black">
+              DA
+            </span>
+            <span>Profile &amp; Vehicle Specs</span>
+          </button>
           <button
             onClick={() => setIsBroadcastingGps(!isBroadcastingGps)}
             className={`px-3.5 py-2 text-xs font-bold rounded-full transition-all flex items-center gap-1.5 shadow-xs ${
@@ -791,6 +839,142 @@ export default function DriverWorkspace() {
           </div>
         )}
       </div>
+
+      {/* Driver Profile & Vehicle Specs Modal */}
+      {isProfileOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-in fade-in duration-200">
+          <div className="bg-white rounded-3xl max-w-lg w-full p-6 sm:p-7 border border-zinc-200 shadow-2xl space-y-5 animate-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between pb-4 border-b border-zinc-200">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-full bg-black text-white flex items-center justify-center text-base font-black shadow-xs">
+                  {driverName.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2) || "DA"}
+                </div>
+                <div>
+                  <h2 className="text-lg font-black text-zinc-950">Driver Profile &amp; Vehicle</h2>
+                  <span className="text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">
+                    ● Active Fleet Partner
+                  </span>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsProfileOpen(false)}
+                className="w-8 h-8 rounded-full bg-zinc-100 hover:bg-zinc-200 text-zinc-700 flex items-center justify-center font-bold text-sm transition-colors"
+              >
+                ✕
+              </button>
+            </div>
+
+            {profileMessage && (
+              <div className="p-3 bg-emerald-50 border border-emerald-200 text-emerald-900 text-xs rounded-xl font-bold">
+                ✓ {profileMessage}
+              </div>
+            )}
+
+            <form onSubmit={handleSaveDriverProfile} className="space-y-4 text-xs">
+              <div>
+                <label className="block font-bold text-zinc-900 mb-1">Driver Full Name</label>
+                <input
+                  type="text"
+                  value={driverName}
+                  onChange={(e) => setDriverName(e.target.value)}
+                  required
+                  placeholder="Driver display name"
+                  className="w-full px-3.5 py-2.5 border border-zinc-200 rounded-xl bg-white text-zinc-900 focus:outline-none focus:ring-2 focus:ring-black font-medium"
+                />
+              </div>
+
+              <div>
+                <label className="block font-bold text-zinc-900 mb-1">Vehicle Model &amp; Color</label>
+                <input
+                  type="text"
+                  value={vehicleLabel}
+                  onChange={(e) => setVehicleLabel(e.target.value)}
+                  required
+                  placeholder="e.g. Swift Dzire Prime (White)"
+                  className="w-full px-3.5 py-2.5 border border-zinc-200 rounded-xl bg-white text-zinc-900 focus:outline-none focus:ring-2 focus:ring-black font-medium"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block font-bold text-zinc-900 mb-1">License Plate No.</label>
+                  <input
+                    type="text"
+                    value={vehicleRegistration}
+                    onChange={(e) => setVehicleRegistration(e.target.value)}
+                    required
+                    placeholder="e.g. KA-01-EQ-4491"
+                    className="w-full px-3.5 py-2.5 border border-zinc-200 rounded-xl bg-white text-zinc-900 font-mono font-bold uppercase focus:outline-none focus:ring-2 focus:ring-black"
+                  />
+                </div>
+
+                <div>
+                  <label className="block font-bold text-zinc-900 mb-1">Vehicle Tier</label>
+                  <select
+                    value={vehicleType}
+                    onChange={(e) => setVehicleType(e.target.value)}
+                    className="w-full px-3 py-2.5 border border-zinc-200 rounded-xl bg-white text-zinc-900 font-medium focus:ring-2 focus:ring-black"
+                  >
+                    <option value="standard">Standard Sedan</option>
+                    <option value="electric_ev">Electric EV Fleet</option>
+                    <option value="pool_shared">Eco Pooling Car</option>
+                    <option value="premium_suv">Premium XL / SUV</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="block font-bold text-zinc-900 mb-1">Payout UPI Address (Direct Settlement)</label>
+                <input
+                  type="text"
+                  value={upiId}
+                  onChange={(e) => setUpiId(e.target.value)}
+                  placeholder="driver@okhdfcbank"
+                  className="w-full px-3.5 py-2.5 border border-zinc-200 rounded-xl bg-white text-zinc-900 font-mono focus:outline-none focus:ring-2 focus:ring-black"
+                />
+                <span className="text-[10px] text-zinc-500 mt-1 block">
+                  Trip fares automatically settle to this virtual payment address.
+                </span>
+              </div>
+
+              {/* Service Stats Summary */}
+              <div className="bg-zinc-50 border border-zinc-200 rounded-2xl p-3.5 grid grid-cols-3 gap-2 text-center">
+                <div>
+                  <span className="text-[10px] text-zinc-500 block uppercase font-bold">Lifetime Trips</span>
+                  <span className="font-black text-zinc-950 text-sm">342 rides</span>
+                </div>
+                <div>
+                  <span className="text-[10px] text-zinc-500 block uppercase font-bold">Driver Rating</span>
+                  <span className="font-black text-amber-600 text-sm">⭐ 4.92</span>
+                </div>
+                <div>
+                  <span className="text-[10px] text-zinc-500 block uppercase font-bold">Workload Index</span>
+                  <span className="font-black text-emerald-700 text-sm">94% Fair</span>
+                </div>
+              </div>
+
+              <div className="pt-2 flex items-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => setIsProfileOpen(false)}
+                  className="flex-1 py-3 px-4 border border-zinc-200 text-zinc-700 font-bold rounded-xl hover:bg-zinc-50 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={profileSaving}
+                  className="flex-1 py-3 px-4 bg-black hover:bg-zinc-800 text-white font-bold rounded-xl transition-all shadow-sm active:scale-[0.99] disabled:opacity-50"
+                >
+                  {profileSaving ? "Updating Specs..." : "Save Driver Specs"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

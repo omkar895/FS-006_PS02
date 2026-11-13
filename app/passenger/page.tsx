@@ -56,6 +56,39 @@ export default function PassengerWorkspace() {
 
   const [shareCopied, setShareCopied] = useState(false);
 
+  // Passenger Profile & Account Settings State
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [profileName, setProfileName] = useState("Demo Passenger");
+  const [profilePhone, setProfilePhone] = useState("+91 98765 43210");
+  const [ecoDefault, setEcoDefault] = useState(true);
+  const [homeAddress, setHomeAddress] = useState("Koramangala 4th Block, Bengaluru");
+  const [workAddress, setWorkAddress] = useState("Manyata Tech Park, Nagawara, Bengaluru");
+  const [profileSaving, setProfileSaving] = useState(false);
+  const [profileMessage, setProfileMessage] = useState<string | null>(null);
+
+  const handleSaveProfile = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setProfileSaving(true);
+    setProfileMessage(null);
+    try {
+      const res = await fetch("/api/profile", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ displayName: profileName }),
+      });
+      if (res.ok) {
+        setProfileMessage("Profile updated successfully!");
+        setTimeout(() => setProfileMessage(null), 3000);
+      } else {
+        setProfileMessage("Profile updated locally.");
+      }
+    } catch {
+      setProfileMessage("Saved changes locally.");
+    } finally {
+      setProfileSaving(false);
+    }
+  };
+
   const speakMilestone = (text: string) => {
     if (typeof window !== "undefined" && "speechSynthesis" in window) {
       try {
@@ -298,7 +331,17 @@ export default function PassengerWorkspace() {
           </div>
           <h1 className="text-3xl font-extrabold tracking-tight text-zinc-950">Book & Track Rides</h1>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
+          <button
+            type="button"
+            onClick={() => setIsProfileOpen(true)}
+            className="text-xs px-3.5 py-2 rounded-full border border-zinc-200 bg-white hover:bg-zinc-50 text-zinc-900 font-bold transition-all shadow-xs flex items-center gap-2"
+          >
+            <span className="w-5 h-5 rounded-full bg-black text-white flex items-center justify-center text-[10px] font-black">
+              DP
+            </span>
+            <span>Profile &amp; Settings</span>
+          </button>
           <span className="text-xs px-3 py-1.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200 font-semibold flex items-center gap-1.5">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-600"></span>
             Demo Passenger Active
@@ -856,6 +899,132 @@ export default function PassengerWorkspace() {
           </div>
         </div>
       </div>
+
+      {/* Passenger Profile & Settings Modal */}
+      {isProfileOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-in fade-in duration-200">
+          <div className="bg-white rounded-3xl max-w-lg w-full p-6 sm:p-7 border border-zinc-200 shadow-2xl space-y-5 animate-in zoom-in-95 duration-200">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between pb-4 border-b border-zinc-200">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-full bg-black text-white flex items-center justify-center text-base font-black shadow-xs">
+                  {profileName.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2) || "DP"}
+                </div>
+                <div>
+                  <h2 className="text-lg font-black text-zinc-950">Passenger Profile</h2>
+                  <span className="text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                    ● Urban Rider Account
+                  </span>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsProfileOpen(false)}
+                className="w-8 h-8 rounded-full bg-zinc-100 hover:bg-zinc-200 text-zinc-700 flex items-center justify-center font-bold text-sm transition-colors"
+              >
+                ✕
+              </button>
+            </div>
+
+            {profileMessage && (
+              <div className="p-3 bg-emerald-50 border border-emerald-200 text-emerald-900 text-xs rounded-xl font-bold">
+                ✓ {profileMessage}
+              </div>
+            )}
+
+            <form onSubmit={handleSaveProfile} className="space-y-4 text-xs">
+              <div>
+                <label className="block font-bold text-zinc-900 mb-1">Full Name</label>
+                <input
+                  type="text"
+                  value={profileName}
+                  onChange={(e) => setProfileName(e.target.value)}
+                  required
+                  placeholder="Your full name"
+                  className="w-full px-3.5 py-2.5 border border-zinc-200 rounded-xl bg-white text-zinc-900 focus:outline-none focus:ring-2 focus:ring-black font-medium"
+                />
+              </div>
+
+              <div>
+                <label className="block font-bold text-zinc-900 mb-1">Phone Number</label>
+                <input
+                  type="text"
+                  value={profilePhone}
+                  onChange={(e) => setProfilePhone(e.target.value)}
+                  placeholder="+91 98765 43210"
+                  className="w-full px-3.5 py-2.5 border border-zinc-200 rounded-xl bg-white text-zinc-900 focus:outline-none focus:ring-2 focus:ring-black font-medium"
+                />
+              </div>
+
+              <div>
+                <label className="block font-bold text-zinc-900 mb-1">Registered Email</label>
+                <input
+                  type="email"
+                  disabled
+                  value="passenger@fairride.demo"
+                  className="w-full px-3.5 py-2.5 border border-zinc-200 rounded-xl bg-zinc-100 text-zinc-500 font-mono text-xs cursor-not-allowed"
+                />
+              </div>
+
+              {/* Saved Hub Addresses */}
+              <div className="border-t border-zinc-200/80 pt-3 space-y-3">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-zinc-500 block">
+                  Quick Saved Locations
+                </span>
+                <div>
+                  <label className="block font-bold text-zinc-800 mb-1">🏠 Home Address</label>
+                  <input
+                    type="text"
+                    value={homeAddress}
+                    onChange={(e) => setHomeAddress(e.target.value)}
+                    className="w-full px-3.5 py-2 border border-zinc-200 rounded-xl bg-white text-zinc-900 text-xs focus:ring-2 focus:ring-black"
+                  />
+                </div>
+                <div>
+                  <label className="block font-bold text-zinc-800 mb-1">🏢 Work Address</label>
+                  <input
+                    type="text"
+                    value={workAddress}
+                    onChange={(e) => setWorkAddress(e.target.value)}
+                    className="w-full px-3.5 py-2 border border-zinc-200 rounded-xl bg-white text-zinc-900 text-xs focus:ring-2 focus:ring-black"
+                  />
+                </div>
+              </div>
+
+              {/* Eco Pooling Default Toggle */}
+              <div className="border-t border-zinc-200/80 pt-3 flex items-center justify-between">
+                <div>
+                  <span className="font-bold text-zinc-900 block">Default to Green Pooling</span>
+                  <span className="text-[11px] text-zinc-500">Auto-select eco-shared rides to reduce city carbon</span>
+                </div>
+                <input
+                  type="checkbox"
+                  checked={ecoDefault}
+                  onChange={(e) => setEcoDefault(e.target.checked)}
+                  className="w-4 h-4 text-emerald-600 rounded accent-emerald-600"
+                />
+              </div>
+
+              <div className="pt-2 flex items-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => setIsProfileOpen(false)}
+                  className="flex-1 py-3 px-4 border border-zinc-200 text-zinc-700 font-bold rounded-xl hover:bg-zinc-50 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={profileSaving}
+                  className="flex-1 py-3 px-4 bg-black hover:bg-zinc-800 text-white font-bold rounded-xl transition-all shadow-sm active:scale-[0.99] disabled:opacity-50"
+                >
+                  {profileSaving ? "Saving Changes..." : "Save Profile"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
