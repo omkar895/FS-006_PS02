@@ -33,3 +33,4 @@ describe("Phase 07 — Dispatch Simulation Lab", () => {
     expect(typeof result.tradeOffAnalysis.etaTradeOffMinutes).toBe("number");
   });
 });
+

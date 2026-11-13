@@ -51,30 +51,27 @@
 ---
 
 ## Phase 07 — Admin Control Center and Simulation Lab (COMPLETED)
+- **Simulation Lab Engine:** Deterministic comparative simulation comparing Nearest Baseline vs. FairRide Multi-Factor engine.
+- **Metrics:** Quantifies workload inequality reduction (std dev) against pickup ETA trade-off.
+- **Verification:** 36/36 tests passed across 12 test suites.
 
-### 1. Dispatch Simulation Lab Engine (`lib/algorithms/simulation-lab.ts`)
-- **Immutable Input Dataset:** Generates a deterministic scenario snapshot (requests & fleet coordinates) for fixed random seed.
-- **Side-by-Side Comparative Execution:**
-  - **Baseline:** Nearest Eligible Driver (greedy minimum pickup distance).
-  - **FairRide:** Fairness Multi-Factor Engine (workload balancing, idle time, ETA, distance, reliability).
-- **Genuine Output Metrics:**
-  - Assigned vs unassigned requests.
-  - Completion rate %.
-  - Average pickup ETA & distance.
-  - Driver workload standard deviation (inequality metric).
-  - Minimum and maximum trips per driver.
-  - Transparent trade-off assessment: Measures workload inequality reduction % alongside minor pickup ETA delta.
-- **API Endpoint:** `POST /api/simulation/runs` executes reproducible simulations on demand.
+---
 
-### 2. Admin Operations Console (`app/admin/page.tsx`)
-- **Zone Intelligence View:** Displays forward 30-min forecast demand, available driver supply, pressure ratio, simulated surge, and repositioning recommendations.
-- **Simulation Lab Interface:** Interactive parameters (request count, fleet drivers, random seed, max ETA) with side-by-side results table.
+## Phase 08 — Integration, Testing, Accessibility and Design Polish (COMPLETED)
 
-### 3. Verification & Acceptance Evidence
+### 1. Codebase Audit & Polish
+- Audited entire project: **Zero `TODO` comments**, **Zero `any` types**, no hardcoded secrets or arbitrary ungrounded metrics.
+- All three user workspaces verified end-to-end:
+  1. **Passenger Portal (`/passenger`):** Accessible preset pickers, OpenStreetMap Leaflet surface, nearby discovery card list, and ride history.
+  2. **Driver Portal (`/driver`):** One-handed mobile-first layout, availability toggle, dispatch offer cards, step-by-step lifecycle progression controls, and completed trips.
+  3. **Admin Control Center (`/admin`):** Zone intelligence operational table with repositioning actions and interactive Dispatch Simulation Lab.
+- Added comprehensive DOM integration test suite: [tests/admin-control-center.dom.test.tsx](file:///c:/Users/omkar/OneDrive/Desktop/hackvally/tests/admin-control-center.dom.test.tsx).
+
+### 2. Verification & Acceptance Evidence
 - **TypeScript Check:** `npm run typecheck` &rarr; PASS (`tsc --noEmit` exited 0).
 - **ESLint Check:** `npm run lint` &rarr; PASS (0 warnings, 0 errors).
-- **Unit & DOM Test Suite:** `npm test` &rarr; PASS (**36 / 36 tests passed across 12 test suites**).
-- **Production Build:** `npm run build` &rarr; PASS (Next.js Turbopack compiled `/admin` and `/api/simulation/runs`).
+- **Unit & DOM Test Suite:** `npm test` &rarr; PASS (**38 / 38 tests passed across 13 test suites**).
+- **Production Build:** `npm run build` &rarr; PASS (Next.js Turbopack compiled all static pages and dynamic route handlers).
 
-### 4. Next Step Recommendation
-Phase 07 is complete. Ready for **Phase 08 — Integration, Accessibility and Design QA** (`prompts/08_INTEGRATION_TESTS_ACCESSIBILITY_POLISH.md`).
+### 3. Next Step Recommendation
+Phase 08 is complete and verified. Ready for **Phase 09 — Deployment, Demo and Handoff** (`prompts/09_DEPLOYMENT_DEMO_HANDOFF.md`).
